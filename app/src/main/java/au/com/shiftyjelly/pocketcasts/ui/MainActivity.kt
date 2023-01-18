@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
 import android.view.WindowManager
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -31,6 +32,7 @@ import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivity
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivityContract
 import au.com.shiftyjelly.pocketcasts.account.onboarding.OnboardingActivityContract.OnboardingFinish
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
+import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsSource
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsTrackerWrapper
 import au.com.shiftyjelly.pocketcasts.analytics.FirebaseAnalyticsTracker
 import au.com.shiftyjelly.pocketcasts.databinding.ActivityMainBinding
@@ -67,7 +69,6 @@ import au.com.shiftyjelly.pocketcasts.profile.sonos.SonosAppLinkActivity
 import au.com.shiftyjelly.pocketcasts.repositories.bumpstats.BumpStatsTask
 import au.com.shiftyjelly.pocketcasts.repositories.opml.OpmlImportTask
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
-import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager.PlaybackSource
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackState
 import au.com.shiftyjelly.pocketcasts.repositories.playback.UpNextQueue
 import au.com.shiftyjelly.pocketcasts.repositories.playback.UpNextSource
@@ -84,6 +85,8 @@ import au.com.shiftyjelly.pocketcasts.search.SearchFragment
 import au.com.shiftyjelly.pocketcasts.servers.ServerCallback
 import au.com.shiftyjelly.pocketcasts.servers.ServerManager
 import au.com.shiftyjelly.pocketcasts.servers.discover.PodcastSearch
+import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingFlow
+import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingLauncher
 import au.com.shiftyjelly.pocketcasts.settings.whatsnew.WhatsNewFragment
 import au.com.shiftyjelly.pocketcasts.ui.helper.FragmentHostListener
 import au.com.shiftyjelly.pocketcasts.ui.helper.StatusBarColor
@@ -135,6 +138,7 @@ class MainActivity :
     FragmentHostListener,
     PlayerBottomSheet.PlayerBottomSheetListener,
     SearchFragment.Listener,
+    OnboardingLauncher,
     CoroutineScope {
 
     companion object {
@@ -183,6 +187,21 @@ class MainActivity :
     private lateinit var binding: ActivityMainBinding
     private lateinit var navigator: BottomNavigator
 
+    private val onboardingLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(OnboardingActivityContract()) { result ->
+        when (result) {
+            OnboardingFinish.Done -> {
+                settings.setHasDoneInitialOnboarding()
+            }
+            OnboardingFinish.DoneGoToDiscover -> {
+                settings.setHasDoneInitialOnboarding()
+                openTab(VR.id.navigation_discover)
+            }
+            null -> {
+                Timber.e("Unexpected null result from onboarding activity")
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         Timber.d("Main Activity onCreate")
         super.onCreate(savedInstanceState)
@@ -191,7 +210,7 @@ class MainActivity :
         val showOnboarding = !settings.hasCompletedOnboarding() && !settings.isLoggedIn()
         // Only show if savedInstanceState is null in order to avoid creating onboarding activity twice.
         if (showOnboarding && savedInstanceState == null) {
-            openOnboardingFlow()
+            openOnboardingFlow(OnboardingFlow.InitialOnboarding)
         }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -290,24 +309,8 @@ class MainActivity :
         updateSystemColors()
     }
 
-    private fun openOnboardingFlow() {
-        registerForActivityResult(OnboardingActivityContract()) { result ->
-            when (result) {
-                OnboardingFinish.Completed -> {
-                    settings.setHasCompletedOnboarding()
-                }
-                OnboardingFinish.CompletedGoToDiscover -> {
-                    settings.setHasCompletedOnboarding()
-                    openTab(VR.id.navigation_discover)
-                }
-                OnboardingFinish.AbortedOnboarding -> {
-                    finish()
-                }
-                null -> {
-                    Timber.e("Unexpected null result from onboarding activity")
-                }
-            }
-        }.launch(Intent(this, OnboardingActivity::class.java))
+    override fun openOnboardingFlow(onboardingFlow: OnboardingFlow) {
+        onboardingLauncher.launch(OnboardingActivity.newInstance(this, onboardingFlow))
     }
 
     override fun onStart() {
@@ -820,31 +823,31 @@ class MainActivity :
                 playbackManager.getCurrentEpisode()?.let { episode ->
                     launch(Dispatchers.Main) {
                         if (episode.isDownloaded) {
-                            playbackManager.playQueue(PlaybackSource.MINIPLAYER)
+                            playbackManager.playQueue(AnalyticsSource.MINIPLAYER)
                             warningsHelper.showBatteryWarningSnackbarIfAppropriate()
                         } else {
-                            warningsHelper.streamingWarningDialog(episode = episode, playbackSource = PlaybackSource.MINIPLAYER)
+                            warningsHelper.streamingWarningDialog(episode = episode, playbackSource = AnalyticsSource.MINIPLAYER)
                                 .show(supportFragmentManager, "streaming dialog")
                         }
                     }
                 }
             }
         } else {
-            playbackManager.playQueue(PlaybackSource.MINIPLAYER)
+            playbackManager.playQueue(AnalyticsSource.MINIPLAYER)
             warningsHelper.showBatteryWarningSnackbarIfAppropriate()
         }
     }
 
     override fun onPauseClicked() {
-        playbackManager.pause(playbackSource = PlaybackSource.MINIPLAYER)
+        playbackManager.pause(playbackSource = AnalyticsSource.MINIPLAYER)
     }
 
     override fun onSkipBackwardClicked() {
-        playbackManager.skipBackward(playbackSource = PlaybackSource.MINIPLAYER)
+        playbackManager.skipBackward(playbackSource = AnalyticsSource.MINIPLAYER)
     }
 
     override fun onSkipForwardClicked() {
-        playbackManager.skipForward(playbackSource = PlaybackSource.MINIPLAYER)
+        playbackManager.skipForward(playbackSource = AnalyticsSource.MINIPLAYER)
     }
 
     override fun addFragment(fragment: Fragment, onTop: Boolean) {

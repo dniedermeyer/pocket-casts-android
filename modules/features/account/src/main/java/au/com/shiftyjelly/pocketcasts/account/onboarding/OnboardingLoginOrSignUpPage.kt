@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import au.com.shiftyjelly.pocketcasts.account.R
+import au.com.shiftyjelly.pocketcasts.account.viewmodel.GoogleSignInState
 import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingLoginOrSignUpViewModel
 import au.com.shiftyjelly.pocketcasts.compose.AppThemeWithBackground
 import au.com.shiftyjelly.pocketcasts.compose.bars.NavigationButton
@@ -57,22 +58,21 @@ import au.com.shiftyjelly.pocketcasts.compose.images.HorizontalLogo
 import au.com.shiftyjelly.pocketcasts.compose.preview.ThemePreviewParameterProvider
 import au.com.shiftyjelly.pocketcasts.compose.theme
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
+import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingFlow
 import au.com.shiftyjelly.pocketcasts.ui.theme.Theme
 import au.com.shiftyjelly.pocketcasts.utils.extensions.pxToDp
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.androidbrowserhelper.trusted.Utils.setNavigationBarColor
-import com.google.androidbrowserhelper.trusted.Utils.setStatusBarColor
 import au.com.shiftyjelly.pocketcasts.images.R as IR
 import au.com.shiftyjelly.pocketcasts.localization.R as LR
 
 @Composable
 internal fun OnboardingLoginOrSignUpPage(
     theme: Theme.ThemeType,
-    flow: String,
+    flow: OnboardingFlow,
     onDismiss: () -> Unit,
     onSignUpClicked: () -> Unit,
     onLoginClicked: () -> Unit,
-    onContinueWithGoogleClicked: () -> Unit,
+    onContinueWithGoogleComplete: (GoogleSignInState) -> Unit,
     viewModel: OnboardingLoginOrSignUpViewModel = hiltViewModel()
 ) {
 
@@ -156,7 +156,7 @@ internal fun OnboardingLoginOrSignUpPage(
             ContinueWithGoogleButton(
                 flow = flow,
                 viewModel = viewModel,
-                onClick = onContinueWithGoogleClicked
+                onComplete = onContinueWithGoogleComplete
             )
         } else {
             Spacer(Modifier.height(8.dp))
@@ -231,9 +231,9 @@ private fun Artwork(
  */
 @Composable
 private fun ContinueWithGoogleButton(
-    flow: String,
+    flow: OnboardingFlow,
     viewModel: OnboardingLoginOrSignUpViewModel,
-    onClick: () -> Unit
+    onComplete: (GoogleSignInState) -> Unit
 ) {
     val context = LocalContext.current
     val errorMessage = stringResource(LR.string.onboarding_continue_with_google_error)
@@ -246,7 +246,7 @@ private fun ContinueWithGoogleButton(
     val googleLegacySignInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         viewModel.onGoogleLegacySignInResult(
             result = result,
-            onSuccess = onClick,
+            onSuccess = onComplete,
             onError = showError
         )
     }
@@ -255,7 +255,7 @@ private fun ContinueWithGoogleButton(
     val googleOneTapSignInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         viewModel.onGoogleOneTapSignInResult(
             result = result,
-            onSuccess = onClick,
+            onSuccess = onComplete,
             onError = {
                 viewModel.startGoogleLegacySignIn(
                     onSuccess = { request -> googleLegacySignInLauncher.launch(request) },
@@ -346,11 +346,11 @@ private fun RowOutlinedButtonPreview(@PreviewParameter(ThemePreviewParameterProv
     AppThemeWithBackground(themeType) {
         OnboardingLoginOrSignUpPage(
             theme = themeType,
-            flow = "initial_onboarding",
+            flow = OnboardingFlow.InitialOnboarding,
             onDismiss = {},
             onSignUpClicked = {},
             onLoginClicked = {},
-            onContinueWithGoogleClicked = {},
+            onContinueWithGoogleComplete = {},
         )
     }
 }

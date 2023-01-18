@@ -1,24 +1,58 @@
+7.31
+-----
+*   New Features:
+    *   Add support for HLS streams
+        ([#679](https://github.com/Automattic/pocket-casts-android/pull/679)).
+    *   Incorporated new onboarding flow throughout the app
+        ([#694](https://github.com/Automattic/pocket-casts-android/pull/694)).
+*   Updates
+    *   Update styling of upgrade prompt on account details screen
+        ([#706](https://github.com/Automattic/pocket-casts-android/pull/706)).
+*   Health:
+    *   Switched to using the new user login and register endpoints.
+        ([#685](https://github.com/Automattic/pocket-casts-android/pull/685)).
+*   Bug Fixes:
+    *   Improved handling of sync errors
+        ([#711](https://github.com/Automattic/pocket-casts-android/pull/711)).
+    *   App does a better job respecting the device's dark/light mode settings
+        ([#710](https://github.com/Automattic/pocket-casts-android/pull/710)).
+
 7.30
 -----
-* New Features:
+*   New Features:
     *   Add tappable links to podcast description
         ([#657](https://github.com/Automattic/pocket-casts-android/pull/657)).
     *   Added new Tasker "Query Podcasts", "Query Podcast Episodes", "Query Filter", "Query Filter Episodes" and "Add To Up Next" actions.
         ([#583](https://github.com/Automattic/pocket-casts-android/pull/583)).
     *   Add categories to recommendations screen
         ([#675](https://github.com/Automattic/pocket-casts-android/pull/675)).
+    *   Improved the Android Automotive search
+        ([#681](https://github.com/Automattic/pocket-casts-android/pull/681)).
+
+7.29.2
+-----
+* Bug Fixes:
+    *    Fix text on purchase button in new onboarding flow
+         ([#698](https://github.com/Automattic/pocket-casts-android/pull/698)).
+
+
+7.29.1
+-----
+* Bug Fixes:
+    *   Fixed Norwegian translations
+        ([#689](https://github.com/Automattic/pocket-casts-android/pull/689)).
 
 7.29
 -----
 
-* New Features:
+*   New Features:
     *   Onboarding flow for new users
         ([#645](https://github.com/Automattic/pocket-casts-android/pull/645)).
     *   Display gravatar on profile screen
         ([#644](https://github.com/Automattic/pocket-casts-android/pull/644)).
     *   Remove 2022 End of Year stats flow
         ([#672](https://github.com/Automattic/pocket-casts-android/pull/672)).
-* Bug Fixes:
+*   Bug Fixes:
     *   Fixed podcast date format
         ([#477](https://github.com/Automattic/pocket-casts-android/pull/477)).
     *   Fix unable to permanently change "Skip back time" setting
@@ -45,7 +79,7 @@
 
 *   New Features:
     * Add End of Year stats
-        ([#410](https://github.com/Automattic/pocket-casts-android/issues/410)).  
+        ([#410](https://github.com/Automattic/pocket-casts-android/issues/410)).
     * Support Android 13 per-app language preferences
         ([#519](https://github.com/Automattic/pocket-casts-android/pull/519)).
 *   Bug Fixes:
@@ -163,7 +197,7 @@
 7.21.0
 -----
 
-*   Bug Fixes:    
+*   Bug Fixes:
     *   Fix the mini player's play icon showing the wrong icon.
         ([#208](https://github.com/Automattic/pocket-casts-android/pull/208)).
     *   Fix dark theme background color.
@@ -195,7 +229,7 @@
 7.20.2
 -----
 
-*   Bug Fixes:    
+*   Bug Fixes:
     *   Fix OPML import.
     *   Fix podcasts and folders rearrange crash.
         ([#200](https://github.com/Automattic/pocket-casts-android/issues/200)).
@@ -224,7 +258,7 @@
         ([#3314](https://github.com/shiftyjelly/pocketcasts-android/issues/3314)).
     *   Improve speed of Automotive app
         ([#3330](https://github.com/shiftyjelly/pocketcasts-android/pull/3330)).
-*   Bug Fixes:    
+*   Bug Fixes:
     *   Import latest localizations.
     *   Up Next total time duration is no longer limited to 596h 31m.
     *   Fix video player out of memory issues
@@ -244,22 +278,22 @@
     *   Fix progress bar issue when playback is paused
         ([#3295](https://github.com/shiftyjelly/pocketcasts-android/issues/3295)).
     *   Fix discover single episode colors
-        ([#3288](https://github.com/shiftyjelly/pocketcasts-android/issues/3288)).    
+        ([#3288](https://github.com/shiftyjelly/pocketcasts-android/issues/3288)).
     *   Fix podcast website url
         ([#3290](https://github.com/shiftyjelly/pocketcasts-android/issues/3290)).
     *   Fix localizations
         ([#3277](https://github.com/shiftyjelly/pocketcasts-android/pull/3277)).
-    *   Improve warning when streaming will use metered data 
+    *   Improve warning when streaming will use metered data
         ([#3246](https://github.com/shiftyjelly/pocketcasts-android/pull/3426)).
-    *   Fix crash when switching to podcast without chapters 
+    *   Fix crash when switching to podcast without chapters
         ([#3450](https://github.com/shiftyjelly/pocketcasts-android/pull/3450)).
     *   Improve sharing a list of podcasts
         ([#97](https://github.com/shiftyjelly/pocketcasts-android/pull/97)).
     *   Fix displaying previous show notes briefly when switching episodes.
         ([#35](https://github.com/Automattic/pocket-casts-android/pull/35)).
-    *   Fix same chapter click behaviour 
+    *   Fix same chapter click behaviour
         ([#59](https://github.com/Automattic/pocket-casts-android/pull/59)).
-    *   Replace duration with time left on episode screen from listening history  
+    *   Replace duration with time left on episode screen from listening history
         ([#83](https://github.com/Automattic/pocket-casts-android/pull/83)).
     *   Fix back navigation for full screen player 'Rearrange Actions' page
         ([#76](https://github.com/Automattic/pocket-casts-android/pull/76)).
@@ -280,7 +314,7 @@
     *   Add two new localizations French (Canada) and Spanish (Mexico).
 *   Health:
     *   Migrate app to Android 12 by targeting the SDK version 31.
-*   Bug Fixes:    
+*   Bug Fixes:
     *   Import latest localizations.
     *   Fix localization layout
         ([#3173](https://github.com/shiftyjelly/pocketcasts-android/pull/3173)).
@@ -295,4 +329,4 @@
         ([#3148](https://github.com/shiftyjelly/pocketcasts-android/issues/3148)).
     *   Fix create account next button not working when using 1Password
         ([#3167](https://github.com/shiftyjelly/pocketcasts-android/issues/3167)).
-        
+

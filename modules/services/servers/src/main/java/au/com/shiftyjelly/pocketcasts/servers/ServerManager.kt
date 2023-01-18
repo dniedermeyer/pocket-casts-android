@@ -1,26 +1,27 @@
 package au.com.shiftyjelly.pocketcasts.servers
 
+import android.content.res.Resources
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.text.TextUtils
+import au.com.shiftyjelly.pocketcasts.localization.R
+import au.com.shiftyjelly.pocketcasts.localization.helper.LocaliseHelper
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
 import au.com.shiftyjelly.pocketcasts.models.to.Share
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.servers.di.NoCacheTokenedOkHttpClient
 import au.com.shiftyjelly.pocketcasts.servers.discover.PodcastSearch
-import au.com.shiftyjelly.pocketcasts.servers.model.AuthResultModel
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import io.reactivex.Single
 import io.reactivex.SingleEmitter
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.json.JSONException
-import org.json.JSONObject
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import timber.log.Timber
@@ -28,6 +29,8 @@ import java.io.IOException
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 @Singleton
 open class ServerManager @Inject constructor(
@@ -37,33 +40,6 @@ open class ServerManager @Inject constructor(
     companion object {
         private const val LIST_SEPERATOR = ","
         private const val NO_INTERNET_CONNECTION_MSG = "Check your connection and try again."
-    }
-
-    fun registerWithSyncServer(email: String, password: String, callback: ServerCallback<AuthResultModel>): Call? {
-        return postToSyncServer("/security/register", email, password, null, true, authResultExtractionCallback(callback))
-    }
-
-    fun loginToSyncServer(email: String, password: String, callback: ServerCallback<AuthResultModel>): Call? {
-        return postToSyncServer("/security/login", email, password, null, true, authResultExtractionCallback(callback))
-    }
-
-    private fun authResultExtractionCallback(callback: ServerCallback<AuthResultModel>): PostCallback {
-        return object : PostCallback, ServerFailure by callback {
-            override fun onSuccess(data: String?, response: ServerResponse) {
-                try {
-                    if (data == null) {
-                        throw Exception("Response empty")
-                    }
-                    val jsonData = JSONObject(data)
-                    val token = jsonData.getString("token")
-                    val uuid = jsonData.getString("uuid")
-                    callback.dataReturned(AuthResultModel(token = token, uuid = uuid))
-                } catch (e: JSONException) {
-                    Timber.e(e)
-                    callback.dataReturned(null)
-                }
-            }
-        }
     }
 
     fun obtainThirdPartyToken(email: String, password: String, scope: String, callback: ServerCallback<String>) {
@@ -117,6 +93,39 @@ open class ServerManager @Inject constructor(
                 }
             }
         )
+    }
+
+    suspend fun searchForPodcastsSuspend(searchTerm: String, resources: Resources): PodcastSearch {
+        if (searchTerm.isEmpty()) {
+            return PodcastSearch()
+        }
+        return suspendCancellableCoroutine { continuation ->
+            searchForPodcasts(
+                searchTerm = searchTerm,
+                callback = object : ServerCallback<PodcastSearch> {
+                    override fun dataReturned(result: PodcastSearch?) {
+                        if (result == null) {
+                            continuation.resumeWithException(Exception(resources.getString(R.string.error_search_failed)))
+                        } else {
+                            continuation.resume(result)
+                        }
+                    }
+
+                    override fun onFailed(
+                        errorCode: Int,
+                        userMessage: String?,
+                        serverMessageId: String?,
+                        serverMessage: String?,
+                        throwable: Throwable?,
+                    ) {
+                        val message = LocaliseHelper.serverMessageIdToMessage(serverMessageId, resources::getString)
+                            ?: userMessage
+                            ?: resources.getString(R.string.error_search_failed)
+                        continuation.resumeWithException(throwable ?: Exception(message))
+                    }
+                }
+            )
+        }
     }
 
     open fun searchForPodcastsRx(searchTerm: String): Single<PodcastSearch> {

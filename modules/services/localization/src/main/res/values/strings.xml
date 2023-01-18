@@ -891,6 +891,7 @@
     <string name="plus_description_title">Enhanced Features For Advanced Listeners</string>
     <string name="plus_desktop_apps">Desktop Apps</string>
     <string name="plus_desktop_apps_body">Take your podcasts to more places with our Windows, macOS and Web apps.</string>
+    <string name="plus_take_your_podcasting_to_next_level">Take your podcasting experience to the next level with exclusive access to features and customisation options.</string>
     <string name="plus_learn_more_about_plus">Learn more about Pocket Casts Plus</string>
     <string name="plus_learn_more_button">Learn More</string>
     <string name="plus_lifetime_member">Lifetime Member</string>
@@ -1496,7 +1497,7 @@
     <string name="onboarding_plus_feature_cloud_storage_title">10GB Cloud Storage</string>
     <string name="onboarding_plus_feature_cloud_storage_text">Upload your files to cloud storage and have them available everywhere.</string>
     <string name="onboarding_plus_feature_hide_ads_title">Hide Ads</string>
-    <string name="onboarding_plus_feature_hide_ads_text">Ad-free experience which gives you more of what you love and less of what you don\'t.</string>
+    <string name="onboarding_plus_feature_hide_ads_text">Ad-free discovery which gives you more of what you love and less of what you don\'t.</string>
     <string name="onboarding_plus_feature_themes_icons_title">Themes &amp; Icons</string>
     <string name="onboarding_plus_feature_themes_icons_text">Fly your true colors. Exclusive icons and themes for the Plus club only.</string>
     <string name="onboarding_plus_become_a_plus_member">Become a Plus member and unlock all Pocket&#160;Casts features</string>

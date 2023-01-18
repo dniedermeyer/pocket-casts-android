@@ -35,9 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import au.com.shiftyjelly.pocketcasts.account.onboarding.upgrade.OnboardingPlusFeatures.PlusOutlinedRowButton
-import au.com.shiftyjelly.pocketcasts.account.onboarding.upgrade.OnboardingPlusFeatures.PlusRowButton
-import au.com.shiftyjelly.pocketcasts.account.onboarding.upgrade.OnboardingPlusFeatures.UnselectedPlusOutlinedRowButton
+import au.com.shiftyjelly.pocketcasts.account.onboarding.upgrade.OnboardingPlusHelper.PlusOutlinedRowButton
+import au.com.shiftyjelly.pocketcasts.account.onboarding.upgrade.OnboardingPlusHelper.PlusRowButton
+import au.com.shiftyjelly.pocketcasts.account.onboarding.upgrade.OnboardingPlusHelper.UnselectedPlusOutlinedRowButton
 import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingPlusBottomSheetState
 import au.com.shiftyjelly.pocketcasts.account.viewmodel.OnboardingPlusBottomSheetViewModel
 import au.com.shiftyjelly.pocketcasts.compose.bottomsheet.Pill
@@ -170,20 +170,26 @@ fun OnboardingPlusBottomSheet(
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
+
+            Divider(
+                thickness = 1.dp,
+                color = Color(0xFFE4E4E4),
+                modifier = Modifier
+                    .padding(vertical = 16.dp)
+                    .alpha(0.24f)
+            )
+
+            PlusRowButton(
+                text = stringResource(
+                    if (state.selectedSubscription.trialPricingPhase != null) {
+                        LR.string.onboarding_plus_start_free_trial_and_subscribe
+                    } else {
+                        LR.string.subscribe
+                    }
+                ),
+                onClick = onClickSubscribe,
+            )
         }
-
-        Divider(
-            thickness = 1.dp,
-            color = Color(0xFFE4E4E4),
-            modifier = Modifier
-                .padding(vertical = 16.dp)
-                .alpha(0.24f)
-        )
-
-        PlusRowButton(
-            text = stringResource(LR.string.onboarding_plus_start_free_trial_and_subscribe),
-            onClick = onClickSubscribe,
-        )
 
         Spacer(Modifier.height(16.dp))
 
