@@ -1023,6 +1023,11 @@
     <string name="settings_lock_image">lock image</string>
     <string name="settings_manage_downloads_include_starred">Include starred</string>
     <string name="settings_manage_downloads_total">Total</string>
+    <string name="settings_media_actions_prioritize_title">Prioritize your custom media actions</string>
+    <string name="settings_media_actions_prioritize_subtitle">Your top actions will be available.</string>
+    <string name="settings_media_actions_customise">Customise media actions</string>
+    <string name="settings_media_actions_show_title">Show custom media actions</string>
+    <string name="settings_media_actions_show_subtitle">Show custom media actions in Android 13 media notifications and Android Auto.</string>
     <string name="settings_media_notification_controls">Media notification controls</string>
     <string name="settings_media_notification_controls_title_archive" translatable="false">@string/archive</string>
     <string name="settings_media_notification_controls_title_mark_as_played" translatable="false">@string/mark_as_played</string>
@@ -1065,8 +1070,6 @@
     <string name="settings_podcasts_selected_one">1 podcast</string>
     <string name="settings_podcasts_selected_x">%d podcasts</string>
     <string name="settings_podcasts_selected_zero">No podcasts selected</string>
-    <string name="settings_prioritize_your_notification_actions">Prioritize your notification actions</string>
-    <string name="settings_rearrange_media_actions">Rearrange Media Actions</string>
     <string name="settings_refresh_all_podcast_artwork">Refresh all podcast artwork</string>
     <string name="settings_refresh_artwork_message">Pocket Casts is now refreshing all your podcast images, this will happen in the background and may take a little time.</string>
     <string name="settings_refresh_artwork_ok" translatable="false">@string/ok</string>
@@ -1271,7 +1274,6 @@
     <string name="settings_privacy_crash_summary">Allow us to collect crash reports.</string>
     <string name="settings_privacy_crash_link">Link your account to crashes</string>
     <string name="settings_privacy_crash_link_summary">Allow us to link your Pocket Casts account to crash reports.</string>
-    <string name="settings_your_top_actions_will_be_available_in_your_notif_and_android_auto_player">Your top actions will be available in your Android 13 notification and Android Auto player.</string>
 
     <string name="whats_new_folders_title_7_20" translatable="false">@string/folders</string>
     <string name="whats_new_folders_7_20">If you love podcasts half as much as we do, you probably have a lot of them. If you\'re a Pocket Casts Plus subscriber, you can now sort these into folders and file them into neat groups.\n\nThanks to your support, your Home Screen has never looked better!</string>
@@ -1472,9 +1474,8 @@
     <!-- Onboarding -->
 
     <string name="onboarding_welcome_back">Welcome Back</string>
-    <string name="not_now">Not Now</string>
+    <string name="not_now">Not now</string>
     <string name="onboarding_log_in">Log in</string>
-    <string name="onboarding_create_account">Create Account</string>
     <string name="onboarding_sign_up">Sign up</string>
     <string name="onboarding_continue_with_google">Continue with Google</string>
     <string name="onboarding_continue_with_google_error">Unable to launch Google sign in.</string>
@@ -1483,13 +1484,14 @@
     <string name="onboarding_get_the_newsletter">Get the newsletter</string>
     <string name="onboarding_forgot_password">Forgot password?</string>
     <string name="onboarding_email_invalid_message">Please enter a valid email</string>
+    <string name="onboarding_create_account">Create Account</string>
     <string name="onboarding_recommendations_find_favorite_podcasts">Find your favorite podcasts</string>
     <string name="onboarding_recommendations_make_pocket_casts_yours">Make Pocket Casts yours by selecting your favorite podcasts or import them from another podcast player. You can always do this later.</string>
     <string name="onboarding_recommendations_import">Import</string>
     <string name="onboarding_recommendations_more">More %s</string>
     <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Everything you love about Pocket Casts, plus more</string>
     <string name="onboarding_upgrade_exclusive_features_and_options">Get access to exclusive features and customization options</string>
-    <string name="onboarding_upgrade_unlock_all_features">Unlock All Features</string>
+    <string name="onboarding_upgrade_unlock_all_features">Unlock all features</string>
     <string name="onboarding_plus_feature_desktop_apps_title">Desktop Apps</string>
     <string name="onboarding_plus_feature_desktop_apps_text">Listen in more places with our Windows, macOS, and Web apps.</string>
     <string name="onboarding_plus_feature_folders_title">Folders</string>
@@ -1504,18 +1506,18 @@
     <string name="onboarding_plus_continuing_agrees_to">By continuing, you agree to our %1$s and %2$s.</string>
     <string name="onboarding_plus_privacy_policy">Privacy Policy</string>
     <string name="onboarding_plus_terms_and_conditions">Terms and Conditions</string>
-    <string name="onboarding_plus_start_free_trial_and_subscribe">Start Free Trial &amp; Subscribe</string>
+    <string name="onboarding_plus_start_free_trial_and_subscribe">Start free trial &amp; subscribe</string>
     <string name="onboarding_plus_recurring_after_free_trial">Recurring payments will begin after your %s</string>
     <string name="onboarding_plus_can_be_canceled_at_any_time">Can be canceled at any time.</string>
     <string name="onboarding_welcome_get_you_listening">Welcome, now let\'s get you listening!</string>
     <string name="onboarding_welcome_get_you_listening_plus">Thank you, now let\'s get you listening!</string>
     <string name="onboarding_welcome_recommendations_title">Discover something new</string>
     <string name="onboarding_welcome_recommendations_text">Find under-the-radar and trending podcasts in our hand-curated Discover page.</string>
-    <string name="onboarding_welcome_recommendations_button">Find My Next Podcast</string>
+    <string name="onboarding_welcome_recommendations_button">Find my next podcast</string>
     <string name="onboarding_find_podcasts">Find Podcasts</string>
     <string name="onboarding_import_podcasts_title">Import your podcasts</string>
     <string name="onboarding_import_podcasts_text">Coming from another app? Bring your podcasts with you.</string>
-    <string name="onboarding_import_podcasts_button">Import Podcasts</string>
+    <string name="onboarding_import_podcasts_button">Import podcasts</string>
     <string name="onboarding_bring_your_podcasts">Bring your podcasts with you</string>
     <string name="onboarding_coming_from_another_app">Coming from another app? Import your podcasts and get listening. You can always do this later in settings.</string>
     <string name="onboarding_import_from_castbox">Import from Castbox</string>
