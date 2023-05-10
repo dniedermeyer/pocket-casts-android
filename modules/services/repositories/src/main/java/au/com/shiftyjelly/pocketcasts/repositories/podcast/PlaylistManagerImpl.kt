@@ -3,8 +3,8 @@ package au.com.shiftyjelly.pocketcasts.repositories.podcast
 import android.content.Context
 import android.os.Build
 import au.com.shiftyjelly.pocketcasts.models.db.AppDatabase
-import au.com.shiftyjelly.pocketcasts.models.entity.Episode
 import au.com.shiftyjelly.pocketcasts.models.entity.Playlist
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.models.type.EpisodePlayingStatus
 import au.com.shiftyjelly.pocketcasts.models.type.EpisodeStatusEnum
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
@@ -13,6 +13,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadManager
 import au.com.shiftyjelly.pocketcasts.repositories.extensions.calculateCombinedIconId
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.shortcuts.PocketCastsShortcuts
+import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.reactivex.Completable
 import io.reactivex.Flowable
@@ -36,6 +37,7 @@ class PlaylistManagerImpl @Inject constructor(
     private val settings: Settings,
     private val downloadManager: DownloadManager,
     private val playlistUpdateAnalytics: PlaylistUpdateAnalytics,
+    private val syncManager: SyncManager,
     @ApplicationContext private val context: Context,
     appDatabase: AppDatabase
 ) : PlaylistManager, CoroutineScope {
@@ -141,7 +143,7 @@ class PlaylistManagerImpl @Inject constructor(
         return playlistDao.findById(id)
     }
 
-    override fun findEpisodes(playlist: Playlist, episodeManager: EpisodeManager, playbackManager: PlaybackManager): List<Episode> {
+    override fun findEpisodes(playlist: Playlist, episodeManager: EpisodeManager, playbackManager: PlaybackManager): List<PodcastEpisode> {
         val where = buildPlaylistWhere(playlist, playbackManager)
         val orderBy = getPlaylistOrderByString(playlist)
         val limit = if (playlist.sortOrder() == Playlist.SortOrder.LAST_DOWNLOAD_ATTEMPT_DATE) 1000 else 500
@@ -154,13 +156,13 @@ class PlaylistManagerImpl @Inject constructor(
         return "$where ORDER BY $orderBy" + if (limit != null) " LIMIT $limit" else ""
     }
 
-    override fun observeEpisodes(playlist: Playlist, episodeManager: EpisodeManager, playbackManager: PlaybackManager): Flowable<List<Episode>> {
+    override fun observeEpisodes(playlist: Playlist, episodeManager: EpisodeManager, playbackManager: PlaybackManager): Flowable<List<PodcastEpisode>> {
         val limitCount = if (playlist.sortOrder() == Playlist.SortOrder.LAST_DOWNLOAD_ATTEMPT_DATE) 1000 else 500
         val queryAfterWhere = getPlaylistQuery(playlist, limit = limitCount, playbackManager = playbackManager)
         return episodeManager.observeEpisodesWhere(queryAfterWhere)
     }
 
-    override fun observeEpisodesPreview(playlist: Playlist, episodeManager: EpisodeManager, playbackManager: PlaybackManager): Flowable<List<Episode>> {
+    override fun observeEpisodesPreview(playlist: Playlist, episodeManager: EpisodeManager, playbackManager: PlaybackManager): Flowable<List<PodcastEpisode>> {
         val queryAfterWhere = getPlaylistQuery(playlist, limit = 100, playbackManager = playbackManager)
         return episodeManager.observeEpisodesWhere(queryAfterWhere)
     }
@@ -246,7 +248,7 @@ class PlaylistManagerImpl @Inject constructor(
     }
 
     override fun delete(playlist: Playlist) {
-        val loggedIn = settings.isLoggedIn()
+        val loggedIn = syncManager.isLoggedIn()
         if (loggedIn) {
             playlist.deleted = true
             markAsNotSynced(playlist)
@@ -263,6 +265,11 @@ class PlaylistManagerImpl @Inject constructor(
 
     override fun deleteSynced() {
         playlistDao.deleteDeleted()
+    }
+
+    override suspend fun resetDb() {
+        playlistDao.deleteAll()
+        setupDefaultPlaylists()
     }
 
     override fun deleteSynced(playlist: Playlist) {

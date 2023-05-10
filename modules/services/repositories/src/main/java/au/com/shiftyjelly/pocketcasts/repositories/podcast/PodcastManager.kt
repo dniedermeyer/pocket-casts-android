@@ -1,9 +1,9 @@
 package au.com.shiftyjelly.pocketcasts.repositories.podcast
 
 import au.com.shiftyjelly.pocketcasts.models.db.helper.TopPodcast
-import au.com.shiftyjelly.pocketcasts.models.entity.Episode
 import au.com.shiftyjelly.pocketcasts.models.entity.Folder
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.UserEpisode
 import au.com.shiftyjelly.pocketcasts.models.to.PlaybackEffects
 import au.com.shiftyjelly.pocketcasts.models.to.PodcastGrouping
@@ -71,9 +71,9 @@ interface PodcastManager {
     fun updateAllShowNotifications(showNotifications: Boolean)
     fun updateAllShowNotificationsRx(showNotifications: Boolean): Completable
     fun updateAutoDownloadStatus(podcast: Podcast, autoDownloadStatus: Int)
-    suspend fun updateAutoAddToUpNext(podcast: Podcast, autoAddToUpNext: Int)
-    suspend fun updateAutoAddToUpNexts(podcastUuids: List<String>, autoAddToUpNext: Int)
-    suspend fun updateAutoAddToUpNextsIf(podcastUuids: List<String>, newValue: Int, onlyIfValue: Int)
+    suspend fun updateAutoAddToUpNext(podcast: Podcast, autoAddToUpNext: Podcast.AutoAddUpNext)
+    suspend fun updateAutoAddToUpNexts(podcastUuids: List<String>, autoAddToUpNext: Podcast.AutoAddUpNext)
+    suspend fun updateAutoAddToUpNextsIf(podcastUuids: List<String>, newValue: Podcast.AutoAddUpNext, onlyIfValue: Podcast.AutoAddUpNext)
     fun updateExcludeFromAutoArchive(podcast: Podcast, excludeFromAutoArchive: Boolean)
     fun updateOverrideGlobalEffects(podcast: Podcast, override: Boolean)
     fun updateTrimMode(podcast: Podcast, trimMode: TrimMode)
@@ -90,7 +90,7 @@ interface PodcastManager {
     fun updateOverrideGobalSettings(podcast: Podcast, override: Boolean)
     fun updateEpisodesToKeep(podcast: Podcast, episodeToKeep: Int)
     fun updateColors(podcastUuid: String, background: Int, tintForLightBg: Int, tintForDarkBg: Int, fabForLightBg: Int, fabForDarkBg: Int, linkForLightBg: Int, linkForDarkBg: Int, colorLastDownloaded: Long)
-    fun updateLatestEpisode(podcast: Podcast, latestEpisode: Episode)
+    fun updateLatestEpisode(podcast: Podcast, latestEpisode: PodcastEpisode)
     fun updateGrouping(podcast: Podcast, grouping: PodcastGrouping)
     suspend fun updateSkipLastInSec(podcast: Podcast, skipLast: Int)
     suspend fun updateShowArchived(podcast: Podcast, showArchived: Boolean)
@@ -110,6 +110,7 @@ interface PodcastManager {
     /** Remove methods  */
     fun checkForUnusedPodcasts(playbackManager: PlaybackManager)
     fun deletePodcastIfUnused(podcast: Podcast, playbackManager: PlaybackManager): Boolean
+    suspend fun deleteAllPodcasts()
     fun unsubscribe(podcastUuid: String, playbackManager: PlaybackManager)
     fun unsubscribeAsync(podcastUuid: String, playbackManager: PlaybackManager)
 
@@ -125,6 +126,7 @@ interface PodcastManager {
 
     fun refreshPodcastsIfRequired(fromLog: String)
     fun refreshPodcasts(fromLog: String)
+    suspend fun refreshPodcastsAfterSignIn()
     fun refreshPodcastInBackground(existingPodcast: Podcast, playbackManager: PlaybackManager)
     fun reloadFoldersFromServer()
 

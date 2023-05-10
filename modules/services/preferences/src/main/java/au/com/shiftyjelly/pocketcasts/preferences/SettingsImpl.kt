@@ -1,47 +1,38 @@
 package au.com.shiftyjelly.pocketcasts.preferences
 
-import android.accounts.AccountManager
-import android.accounts.AccountManagerFuture
 import android.annotation.SuppressLint
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.NameNotFoundException
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
-import android.os.Bundle
 import android.util.Base64
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.edit
+import androidx.work.NetworkType
 import au.com.shiftyjelly.pocketcasts.models.to.PlaybackEffects
 import au.com.shiftyjelly.pocketcasts.models.to.PodcastGrouping
 import au.com.shiftyjelly.pocketcasts.models.to.RefreshState
 import au.com.shiftyjelly.pocketcasts.models.to.SubscriptionStatus
 import au.com.shiftyjelly.pocketcasts.models.type.PodcastsSortType
+import au.com.shiftyjelly.pocketcasts.models.type.Subscription
+import au.com.shiftyjelly.pocketcasts.models.type.SubscriptionFrequency
 import au.com.shiftyjelly.pocketcasts.models.type.TrimMode
 import au.com.shiftyjelly.pocketcasts.preferences.Settings.Companion.DEFAULT_MAX_AUTO_ADD_LIMIT
+import au.com.shiftyjelly.pocketcasts.preferences.Settings.Companion.NOTIFICATIONS_DISABLED_MESSAGE_SHOWN
 import au.com.shiftyjelly.pocketcasts.preferences.Settings.Companion.SETTINGS_ENCRYPT_SECRET
 import au.com.shiftyjelly.pocketcasts.preferences.Settings.MediaNotificationControls
-import au.com.shiftyjelly.pocketcasts.preferences.Settings.NotificationChannel
-import au.com.shiftyjelly.pocketcasts.preferences.Settings.NotificationId
 import au.com.shiftyjelly.pocketcasts.preferences.di.PrivateSharedPreferences
 import au.com.shiftyjelly.pocketcasts.preferences.di.PublicSharedPreferences
 import au.com.shiftyjelly.pocketcasts.utils.extensions.isScreenReaderOn
-import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.squareup.moshi.Moshi
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.nio.charset.Charset
 import java.util.Date
@@ -53,8 +44,6 @@ import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.PBEParameterSpec
 import javax.inject.Inject
 import kotlin.math.max
-import au.com.shiftyjelly.pocketcasts.images.R as IR
-import au.com.shiftyjelly.pocketcasts.localization.R as LR
 
 class SettingsImpl @Inject constructor(
     @PublicSharedPreferences private val sharedPreferences: SharedPreferences,
@@ -73,13 +62,15 @@ class SettingsImpl @Inject constructor(
         private const val END_OF_YEAR_MODAL_HAS_BEEN_SHOWN_KEY = "EndOfYearModalHasBeenShownKey"
         private const val DONE_INITIAL_ONBOARDING_KEY = "CompletedOnboardingKey"
         private const val CUSTOM_MEDIA_ACTIONS_VISIBLE_KEY = "CustomMediaActionsVisibleKey"
+        private const val LAST_SELECTED_SUBSCRIPTION_TIER_KEY = "LastSelectedSubscriptionTierKey"
+        private const val LAST_SELECTED_SUBSCRIPTION_FREQUENCY_KEY = "LastSelectedSubscriptionFrequencyKey"
+        private const val PROCESSED_SIGNOUT_KEY = "ProcessedSignout"
     }
 
     private var languageCode: String? = null
 
     private val firebaseRemoteConfig: FirebaseRemoteConfig by lazy { setupFirebaseConfig() }
 
-    override val isLoggedInObservable = BehaviorRelay.create<Boolean>().apply { accept(isLoggedIn()) }
     override val podcastLayoutObservable = BehaviorRelay.create<Int>().apply { accept(getPodcastsLayout()) }
     override val skipForwardInSecsObservable = BehaviorRelay.create<Int>().apply { accept(getSkipForwardInSecs()) }
     override val skipBackwardInSecsObservable = BehaviorRelay.create<Int>().apply { accept(getSkipBackwardInSecs()) }
@@ -223,11 +214,6 @@ class SettingsImpl @Inject constructor(
         setBoolean(Settings.PREFERENCE_SKIP_BACK_NEEDS_SYNC, value)
     }
 
-    override fun updateSkipValues() {
-        skipBackwardInSecsObservable.accept(getSkipBackwardInSecs())
-        skipForwardInSecsObservable.accept(getSkipForwardInSecs())
-    }
-
     override fun getMarketingOptIn(): Boolean {
         return getBoolean(Settings.PREFERENCE_MARKETING_OPT_IN, false)
     }
@@ -278,6 +264,24 @@ class SettingsImpl @Inject constructor(
         editor.putString(Settings.LAST_MAIN_NAV_SCREEN_OPENED, screenId)
         editor.apply()
     }
+
+    override fun syncOnMeteredNetwork(): Boolean {
+        return getBoolean(Settings.PREFERENCE_SYNC_ON_METERED, true)
+    }
+
+    override fun setSyncOnMeteredNetwork(shouldSyncOnMetered: Boolean) {
+        setBoolean(Settings.PREFERENCE_SYNC_ON_METERED, shouldSyncOnMetered)
+    }
+
+    override fun getWorkManagerNetworkTypeConstraint(): NetworkType =
+        if (syncOnMeteredNetwork()) {
+            NetworkType.CONNECTED
+        } else {
+            NetworkType.UNMETERED
+        }
+
+    override fun refreshPodcastsOnResume(isUnmetered: Boolean): Boolean =
+        syncOnMeteredNetwork() || isUnmetered
 
     override fun refreshPodcastsAutomatically(): Boolean {
         return getBoolean("backgroundRefresh", true)
@@ -555,127 +559,6 @@ class SettingsImpl @Inject constructor(
         setString("deviceUuid", getUniqueDeviceId())
     }
 
-    override fun setSyncEmail(email: String) {
-        val manager = AccountManager.get(context)
-        val account = manager.pocketCastsAccount() ?: return
-        manager.renameAccount(account, email, null, null)
-        isLoggedInObservable.accept(isLoggedIn())
-    }
-
-    override fun setSyncPassword(password: String) {
-        val manager = AccountManager.get(context)
-        val account = manager.pocketCastsAccount() ?: return
-        manager.setPassword(account, password)
-        isLoggedInObservable.accept(isLoggedIn())
-    }
-
-    override fun getOldSyncDetails(): Pair<String?, String?> {
-        val email = privatePreferences.getString("syncEmail", null)
-        val password = decrypt(privatePreferences.getString("syncPassword", null))
-
-        return Pair(email, password)
-    }
-
-    override fun clearEmailAndPassword() {
-        val editor = privatePreferences.edit()
-        editor.remove("syncEmail")
-        editor.remove("syncPassword")
-        editor.remove("syncToken")
-        editor.remove("syncApiToken")
-        editor.remove(Settings.PREFERENCE_FIRST_SYNC_RUN)
-        editor.apply()
-        isLoggedInObservable.accept(false)
-    }
-
-    override fun getSyncEmail(): String? {
-        val manager = AccountManager.get(context)
-        return manager.pocketCastsAccount()?.name
-    }
-
-    override fun getSyncPassword(): String? {
-        val manager = AccountManager.get(context)
-        val account = manager.pocketCastsAccount() ?: return null
-        return manager.getPassword(account)
-    }
-
-    override fun getSyncUuid(): String? {
-        val manager = AccountManager.get(context)
-        val account = manager.pocketCastsAccount() ?: return null
-        return manager.getUserData(account, AccountConstants.UUID)
-    }
-
-    private fun peekToken(): String? {
-        val manager = AccountManager.get(context)
-        val account = manager.pocketCastsAccount() ?: return null
-        return manager.peekAuthToken(account, AccountConstants.TOKEN_TYPE)
-    }
-
-    override fun getSyncRefreshToken(): String? {
-        return peekToken()
-    }
-
-    override fun getSyncToken(): String? = runBlocking {
-        getSyncTokenSuspend()
-    }
-
-    override suspend fun getSyncTokenSuspend(): String? {
-        val manager = AccountManager.get(context)
-        val account = manager.pocketCastsAccount() ?: return null
-
-        return withContext(Dispatchers.IO) {
-            try {
-                val resultFuture: AccountManagerFuture<Bundle> = manager.getAuthToken(
-                    account,
-                    AccountConstants.TOKEN_TYPE,
-                    Bundle(),
-                    false,
-                    null,
-                    null
-                )
-                val bundle: Bundle = resultFuture.result // This call will block until the result is available.
-                val token = bundle.getString(AccountManager.KEY_AUTHTOKEN)
-                // Token failed to refresh
-                if (token == null) {
-                    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        bundle.getParcelable(AccountManager.KEY_INTENT, Intent::class.java)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        bundle.getParcelable(AccountManager.KEY_INTENT) as? Intent
-                    }
-                    intent?.let { showSignInErrorNotification(it) }
-                    throw SecurityException("Token could not be refreshed")
-                } else {
-                    token
-                }
-            } catch (e: Exception) {
-                LogBuffer.e(LogBuffer.TAG_BACKGROUND_TASKS, e, "Could not get token")
-                throw e // Rethrow the exception so it carries on
-            }
-        }
-    }
-
-    private fun showSignInErrorNotification(intent: Intent) {
-        val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT.or(PendingIntent.FLAG_IMMUTABLE))
-        val notification = NotificationCompat.Builder(context, NotificationChannel.NOTIFICATION_CHANNEL_ID_SIGN_IN_ERROR.id)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setContentTitle(context.getString(LR.string.token_refresh_sign_in_error_title))
-            .setContentText(context.getString(LR.string.token_refresh_sign_in_error_description))
-            .setAutoCancel(true)
-            .setSmallIcon(IR.drawable.ic_failedwarning)
-            .setOnlyAlertOnce(true)
-            .setContentIntent(pendingIntent)
-            .build()
-        NotificationManagerCompat.from(context)
-            .notify(NotificationId.SIGN_IN_ERROR.value, notification)
-    }
-
-    override fun invalidateToken() {
-        val manager = AccountManager.get(context)
-        val account = manager.pocketCastsAccount() ?: return
-        val token = manager.peekAuthToken(account, AccountConstants.TOKEN_TYPE)
-        manager.invalidateAuthToken(AccountConstants.ACCOUNT_TYPE, token)
-    }
-
     @SuppressLint("HardwareIds")
     @Suppress("DEPRECATION")
     private fun encrypt(value: String?): String {
@@ -726,20 +609,8 @@ class SettingsImpl @Inject constructor(
         }
     }
 
-    override fun isLoggedIn(): Boolean {
-        return getSyncEmail() != null && getSyncPassword() != null
-    }
-
-    override fun getUsedAccountManager(): Boolean {
-        return getBoolean("accountmanager", false)
-    }
-
-    override fun setUsedAccountManager(value: Boolean) {
-        setBoolean("accountmanager", value)
-    }
-
     override fun clearPlusPreferences() {
-        setCloudDeleteCloudAfterPlaying(false)
+        setDeleteCloudFileAfterPlaying(false)
         setCloudAutoUpload(false)
         setCloudAutoDownload(false)
         setCloudOnlyWifi(false)
@@ -1172,9 +1043,13 @@ class SettingsImpl @Inject constructor(
         return getRemoteConfigLong(FirebaseConfig.EPISODE_SEARCH_DEBOUNCE_MS)
     }
 
+    override fun isFeatureFlagSearchImprovementsEnabled(): Boolean {
+        return firebaseRemoteConfig.getBoolean(FirebaseConfig.FEATURE_FLAG_SEARCH_IMPROVEMENTS)
+    }
+
     private fun getRemoteConfigLong(key: String): Long {
         val value = firebaseRemoteConfig.getLong(key)
-        return if (value == 0L) (FirebaseConfig.defaults[key] ?: 0L) else value
+        return if (value == 0L) (FirebaseConfig.defaults[key] as? Long ?: 0L) else value
     }
 
     override fun getUpNextSwipeAction(): Settings.UpNextAction {
@@ -1243,19 +1118,19 @@ class SettingsImpl @Inject constructor(
         setBoolean("cloudUpNext", value)
     }
 
-    override fun getCloudDeleteAfterPlaying(): Boolean {
+    override fun getDeleteLocalFileAfterPlaying(): Boolean {
         return getBoolean("cloudDeleteAfterPlaying", false)
     }
 
-    override fun setCloudDeleteAfterPlaying(value: Boolean) {
+    override fun setDeleteLocalFileAfterPlaying(value: Boolean) {
         setBoolean("cloudDeleteAfterPlaying", value)
     }
 
-    override fun getCloudDeleteCloudAfterPlaying(): Boolean {
+    override fun getDeleteCloudFileAfterPlaying(): Boolean {
         return getBoolean("cloudDeleteCloudAfterPlaying", false)
     }
 
-    override fun setCloudDeleteCloudAfterPlaying(value: Boolean) {
+    override fun setDeleteCloudFileAfterPlaying(value: Boolean) {
         setBoolean("cloudDeleteCloudAfterPlaying", value)
     }
 
@@ -1503,4 +1378,36 @@ class SettingsImpl @Inject constructor(
         setBoolean(CUSTOM_MEDIA_ACTIONS_VISIBLE_KEY, value)
         customMediaActionsVisibilityFlow.update { value }
     }
+
+    override fun isNotificationsDisabledMessageShown() =
+        getBoolean(NOTIFICATIONS_DISABLED_MESSAGE_SHOWN, false)
+
+    override fun setNotificationsDisabledMessageShown(value: Boolean) {
+        setBoolean(NOTIFICATIONS_DISABLED_MESSAGE_SHOWN, value)
+    }
+
+    override fun setLastSelectedSubscriptionTier(tier: Subscription.SubscriptionTier) {
+        setString(LAST_SELECTED_SUBSCRIPTION_TIER_KEY, tier.name)
+    }
+
+    override fun getLastSelectedSubscriptionTier() =
+        getString(LAST_SELECTED_SUBSCRIPTION_TIER_KEY)?.let {
+            Subscription.SubscriptionTier.valueOf(it)
+        }
+
+    override fun setLastSelectedSubscriptionFrequency(frequency: SubscriptionFrequency) {
+        setString(LAST_SELECTED_SUBSCRIPTION_FREQUENCY_KEY, frequency.name)
+    }
+
+    override fun getLastSelectedSubscriptionFrequency() =
+        getString(LAST_SELECTED_SUBSCRIPTION_FREQUENCY_KEY)?.let {
+            SubscriptionFrequency.valueOf(it)
+        }
+
+    override fun setFullySignedOut(boolean: Boolean) {
+        setBoolean(PROCESSED_SIGNOUT_KEY, boolean)
+    }
+
+    override fun getFullySignedOut(): Boolean =
+        getBoolean(PROCESSED_SIGNOUT_KEY, true)
 }

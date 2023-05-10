@@ -1,9 +1,11 @@
 package au.com.shiftyjelly.pocketcasts.podcasts.view.share
 
-import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.toLiveData
 import androidx.lifecycle.viewModelScope
+import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
+import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsTrackerWrapper
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
@@ -21,16 +23,17 @@ class ShareListIncomingViewModel
 @Inject constructor(
     val podcastManager: PodcastManager,
     val listServerManager: ListServerManager,
-    val playbackManager: PlaybackManager
+    val playbackManager: PlaybackManager,
+    val analyticsTracker: AnalyticsTrackerWrapper,
 ) : ViewModel(), CoroutineScope {
-
+    var isFragmentChangingConfigurations: Boolean = false
     val share = MutableLiveData<ShareState>()
-    val subscribedUuids = LiveDataReactiveStreams.fromPublisher(
+    val subscribedUuids =
         podcastManager.getSubscribedPodcastUuids()
             .subscribeOn(Schedulers.io())
             .toFlowable()
             .mergeWith(podcastManager.observePodcastSubscriptions())
-    )
+            .toLiveData()
 
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Default
@@ -59,6 +62,14 @@ class ShareListIncomingViewModel
 
     fun unsubscribeFromPodcast(uuid: String) {
         podcastManager.unsubscribeAsync(uuid, playbackManager)
+    }
+
+    fun onFragmentPause(isChangingConfigurations: Boolean?) {
+        isFragmentChangingConfigurations = isChangingConfigurations ?: false
+    }
+
+    fun trackShareEvent(event: AnalyticsEvent, properties: Map<String, Any> = emptyMap()) {
+        analyticsTracker.track(event, properties)
     }
 }
 

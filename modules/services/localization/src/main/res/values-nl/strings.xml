@@ -1,11 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Translation-Revision-Date: 2023-01-18 08:54:19+0000
+Translation-Revision-Date: 2023-04-25 15:54:03+0000
 Plural-Forms: nplurals=2; plural=n != 1;
 Generator: GlotPress/2.4.0-alpha
 Language: nl
 -->
 <resources>
+    <string name="episode_downloading">Downloaden</string>
+    <string name="episode_in_up_next">In Hierna</string>
+    <string name="onboarding_plus_feature_gratitude_title">De eeuwige dank van iedereen bij Pocket Casts</string>
+    <string name="onboarding_plus_features_description">Til je podcast-ervaring naar het volgende niveau met exclusieve toegang tot functies en aanpassingsmogelijkheden.</string>
+    <string name="onboarding_patron_feature_special_icons_title">Speciale Pocket Casts app-pictogrammen</string>
+    <string name="onboarding_patron_feature_profile_badge_title">Profielbadge voor supporters</string>
+    <string name="onboarding_patron_feature_cloud_storage_title">50 GB cloudopslag</string>
+    <string name="onboarding_patron_feature_everything_in_plus_title">Alles in plus</string>
+    <string name="onboarding_patron_features_description">Word een patron van Pocket Casts en help ons de beste podcastervaring te blijven leveren.</string>
+    <string name="onboarding_patron_features_title">Geloof je in wat we doen en wil je laten zien dat je ons steunt?</string>
+    <string name="slash_month">/maand</string>
+    <string name="slash_year">/jaar</string>
+    <string name="server_user_delete_account_with_sub_failed">Je account heeft een actief Pocket Casts Plus abonnement. Annuleer dit abonnement voordat je je account verwijdert.</string>
+    <string name="server_user_change_email_success">Het e-mailadres is met succes gewijzigd.</string>
+    <string name="server_user_email_verification_failed">E-mailverificatie is mislukt.</string>
+    <string name="server_user_email_success">Verzending van e-mail is gelukt.</string>
+    <string name="server_user_email_failed">Fout bij het versturen van de e-mail.</string>
+    <string name="server_promo_winback_no_plus">Deze promo kan niet ingeruild worden omdat je momenteel geen plus abonnement hebt.</string>
+    <string name="server_login_password_change_failed">Kan wachtwoord niet wijzigen.</string>
+    <string name="server_login_password_change_success">Wachtwoord gewijzigd</string>
+    <string name="add_to_up_next_question">Toevoegen aan Hierna?</string>
+    <string name="wear_show_password">Wachtwoord weergeven</string>
+    <string name="wear_hide_password">Wachtwoord verbergen</string>
+    <string name="settings_metered_data_warning">Datalimietwaarschuwing</string>
+    <string name="stream_warning_summary_short">Voor streamen wordt data gebruikt. Doorgaan?</string>
+    <string name="removed">Verwijderd</string>
+    <string name="mark_unplayed">Markeren als niet-afgespeeld</string>
+    <string name="log_out">Uitloggen</string>
+    <string name="account">Account</string>
+    <string name="profile_just_sign_out">Je kunt je gewoon afmelden</string>
+    <string name="profile_clear_data_would_you_also_like_question">Wil je ook alle gegevens uit de app wissen?</string>
+    <string name="profile_clear_data_question">Gegevens wissen?</string>
+    <string name="profile_clear_data">Gegevens wissen</string>
+    <string name="discover_sponsored">Gesponsord</string>
+    <string name="podcasts_all">Alle podcasts</string>
+    <string name="search_results_all_podcasts">Alle podcasts</string>
+    <string name="search_results_all_episodes">Alle afleveringen</string>
+    <string name="search_history_row_type_episode_subtitle">Aflevering \u2022 %s \u2022 %s</string>
+    <string name="search_show_all">Alles tonen</string>
+    <string name="podcast">Podcast</string>
+    <string name="search_history_row_type_podcast_subtitle">Podcast \u2022 %s</string>
+    <string name="search_history_row_type_folder_subtitle">Folder \u2022 %s</string>
+    <string name="search_history_recent_searches">Recente zoekopdrachten</string>
+    <string name="search_history_clear_all_confirmation_message">Weet je zeker dat je je hele zoekgeschiedenis wilt wissen?</string>
+    <string name="search_history_clear_all_confirm_button_title">Zoekgeschiedenis wissen</string>
+    <string name="search_podcasts_or_add_url">Zoek podcasts of voeg de RSS-URL toe</string>
+    <string name="error_opening_links_activity_not_found">Zo te zien heb je geen app waarmee je deze content kunt bekijken.</string>
+    <string name="notifications_blocked_warning">Meldingen worden geblokkeerd. Je kunt de toestemming bijwerken bij de instellen.</string>
+    <string name="settings_media_actions_show_subtitle">Aangepaste media-actes weergeven in Android 13-mediameldingen en Android Auto.</string>
+    <string name="settings_media_actions_show_title">Aangepaste media-acties weergeven</string>
+    <string name="settings_media_actions_customise">Media-acties aanpassen</string>
+    <string name="settings_media_actions_prioritize_subtitle">Uw belangrijkste acties zullen beschikbaar zijn</string>
+    <string name="settings_media_actions_prioritize_title">Uw aangepaste media-acties prioriteren</string>
+    <string name="plus_take_your_podcasting_to_next_level">Til je podcast-ervaring naar het volgende niveau met exclusieve toegang tot functies en aanpassingsmogelijkheden.</string>
     <string name="onboarding_recommendations_more">Meer %s</string>
     <string name="filter_id_or_title">Filter-ID of -titel</string>
     <string name="filter_title">Filtertitel</string>
@@ -57,9 +111,6 @@ Language: nl
     <string name="profile_cancel_confirm_sub_expiry_date_fallback">je vervaldatum</string>
     <string name="profile_cancel_confirm_sub_expiry">Je huidige abonnement blijft actief tot %1$s.</string>
     <string name="profile_cancel_confirm_subtitle">Hierdoor wordt je abonnement aangepast naar een gratis account.</string>
-    <string name="settings_your_top_actions_will_be_available_in_your_notif_and_android_auto_player">Jouw topacties zijn beschikbaar in je Android 13-meldingen en Android Auto-speler.</string>
-    <string name="settings_rearrange_media_actions">Media-acties herschikken</string>
-    <string name="settings_prioritize_your_notification_actions">Je meldingsacties prioriteren</string>
     <string name="settings_other_media_actions">Andere media-acties</string>
     <string name="settings_customize_buttons_displayed_in_android_13_notification_and_android_auto">Pas de knoppen aan die worden weergegeven in Android 13-afspeelmeldingen en Android Auto.</string>
     <string name="podcast_not_subscribed">Niet geabonneerd</string>
@@ -99,8 +150,6 @@ Language: nl
     <string name="end_of_year_stories_failed">Kan je eindejaarsverhalen niet laden, controleer je internetverbinding.</string>
     <string name="onboarding_plus_feature_themes_icons_text">Toon je ware aard. Exclusieve pictogrammen en thema\'s voor Plus-abonnees.</string>
     <string name="onboarding_plus_feature_themes_icons_title">Thema\'s en pictogrammen</string>
-    <string name="onboarding_plus_feature_hide_ads_text">Advertentievrije discovery die je meer biedt van wat je leuk vindt en minder van wat je niet leuk vindt.</string>
-    <string name="onboarding_plus_feature_hide_ads_title">Advertenties verbergen</string>
     <string name="onboarding_plus_feature_cloud_storage_text">Wanneer je je bestanden naar een cloudopslag uploadt, zijn ze overal beschikbaar.</string>
     <string name="onboarding_plus_feature_cloud_storage_title">10 GB cloudopslag</string>
     <string name="onboarding_plus_feature_folders_text">Organiseer je podcasts in mappen en synchroniseer ze op al je apparaten.</string>
@@ -123,6 +172,7 @@ Language: nl
     <string name="onboarding_discover_your_next_favorite_podcast">Ontdek je volgende nieuwe favoriete podcast</string>
     <string name="onboarding_continue_with_google">Doorgaan met Google</string>
     <string name="onboarding_welcome_back">Welkom terug</string>
+    <string name="log_in">Inloggen</string>
     <string name="end_of_year_create_account_to_see">Sla je podcasts op in de cloud, krijg je beoordeling aan het einde van het jaar en synchroniseer je voortgang met andere apparaten.</string>
     <string name="end_of_year_story_top_categories_share_text">Mijn meest beluisterde podcastcategorieën</string>
     <string name="end_of_year_story_top_categories">Je beste categorieën</string>
@@ -628,7 +678,7 @@ Language: nl
     <string name="settings_podcast_artwork">Podcast-artwork</string>
     <string name="settings_playback_resumption_summary">Als deze optie is ingeschakeld, spoelt Pocket Casts een stukje terug in afleveringen die je hervat, zodat je iets aangenamer begint.</string>
     <string name="settings_playback_resumption">Intelligent hervatten van afspelen</string>
-    <string name="settings_notification_vibrate_never">Nieuwe afleveringen</string>
+    <string name="settings_notification_vibrate_never">Nooit</string>
     <string name="settings_notification_vibrate_in_silent">Alleen in stille modus</string>
     <string name="settings_notification_vibrate_new_episodes">Nieuwe afleveringen</string>
     <string name="settings_notification_vibrate">Trillen wanneer</string>

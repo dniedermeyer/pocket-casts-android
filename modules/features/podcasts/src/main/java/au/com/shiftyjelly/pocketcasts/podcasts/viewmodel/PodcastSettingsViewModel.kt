@@ -1,8 +1,11 @@
 package au.com.shiftyjelly.pocketcasts.podcasts.viewmodel
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.toLiveData
+import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
+import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsSource
+import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsTrackerWrapper
 import au.com.shiftyjelly.pocketcasts.models.entity.Playlist
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
@@ -27,6 +30,7 @@ class PodcastSettingsViewModel @Inject constructor(
     private val podcastManager: PodcastManager,
     private val playbackManager: PlaybackManager,
     private val playlistManager: PlaylistManager,
+    private val analyticsTracker: AnalyticsTrackerWrapper,
     settings: Settings
 ) : ViewModel(), CoroutineScope {
 
@@ -38,24 +42,27 @@ class PodcastSettingsViewModel @Inject constructor(
     lateinit var includedFilters: LiveData<List<Playlist>>
     lateinit var availableFilters: LiveData<List<Playlist>>
 
-    val globalSettings = LiveDataReactiveStreams.fromPublisher(
-        settings.autoAddUpNextLimit.toFlowable(BackpressureStrategy.LATEST)
-            .combineLatest(settings.autoAddUpNextLimitBehaviour.toFlowable(BackpressureStrategy.LATEST))
-    )
+    val globalSettings = settings.autoAddUpNextLimit
+        .toFlowable(BackpressureStrategy.LATEST)
+        .combineLatest(settings.autoAddUpNextLimitBehaviour.toFlowable(BackpressureStrategy.LATEST))
+        .toLiveData()
 
     fun loadPodcast(uuid: String) {
         this.podcastUuid = uuid
-        podcast = LiveDataReactiveStreams.fromPublisher(podcastManager.observePodcastByUuid(uuid).subscribeOn(Schedulers.io()))
+        podcast = podcastManager
+            .observePodcastByUuid(uuid)
+            .subscribeOn(Schedulers.io())
+            .toLiveData()
 
         val filters = playlistManager.observeAll().map {
             it.filter { filter -> filter.podcastUuidList.contains(uuid) }
         }
-        includedFilters = LiveDataReactiveStreams.fromPublisher(filters)
+        includedFilters = filters.toLiveData()
 
         val availablePodcastFilters = playlistManager.observeAll().map {
             it.filter { filter -> !filter.allPodcasts }
         }
-        availableFilters = LiveDataReactiveStreams.fromPublisher(availablePodcastFilters)
+        availableFilters = availablePodcastFilters.toLiveData()
     }
 
     fun isAutoAddToUpNextOn(): Boolean {
@@ -64,13 +71,13 @@ class PodcastSettingsViewModel @Inject constructor(
 
     fun updateAutoAddToUpNext(isOn: Boolean) {
         val podcast = this.podcast.value ?: return
-        val value = if (isOn) Podcast.AUTO_ADD_TO_UP_NEXT_PLAY_LAST else Podcast.AUTO_ADD_TO_UP_NEXT_OFF
+        val value = if (isOn) Podcast.AutoAddUpNext.PLAY_LAST else Podcast.AutoAddUpNext.OFF
         launch {
             podcastManager.updateAutoAddToUpNext(podcast, value)
         }
     }
 
-    fun updateAutoAddToUpNextOrder(value: Int) {
+    fun updateAutoAddToUpNextOrder(value: Podcast.AutoAddUpNext) {
         val podcast = this.podcast.value ?: return
         launch {
             podcastManager.updateAutoAddToUpNext(podcast, value)
@@ -111,6 +118,10 @@ class PodcastSettingsViewModel @Inject constructor(
         val podcast = this.podcast.value ?: return
         launch {
             podcastManager.unsubscribe(podcast.uuid, playbackManager)
+            analyticsTracker.track(
+                AnalyticsEvent.PODCAST_UNSUBSCRIBED,
+                AnalyticsProp.podcastUnsubscribed(AnalyticsSource.PODCAST_SETTINGS, podcast.uuid)
+            )
         }
     }
 
@@ -144,5 +155,12 @@ class PodcastSettingsViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private object AnalyticsProp {
+        private const val SOURCE_KEY = "source"
+        private const val UUID_KEY = "uuid"
+        fun podcastUnsubscribed(source: AnalyticsSource, uuid: String) =
+            mapOf(SOURCE_KEY to source.analyticsValue, UUID_KEY to uuid)
     }
 }

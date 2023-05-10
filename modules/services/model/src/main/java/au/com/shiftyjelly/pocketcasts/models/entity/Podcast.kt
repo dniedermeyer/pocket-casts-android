@@ -51,7 +51,7 @@ data class Podcast(
     @ColumnInfo(name = "subscribed") var isSubscribed: Boolean = false,
     @ColumnInfo(name = "show_notifications") var isShowNotifications: Boolean = false,
     @ColumnInfo(name = "auto_download_status") var autoDownloadStatus: Int = 0,
-    @ColumnInfo(name = "auto_add_to_up_next") var autoAddToUpNext: Int = 0,
+    @ColumnInfo(name = "auto_add_to_up_next") var autoAddToUpNext: AutoAddUpNext = AutoAddUpNext.OFF,
     @ColumnInfo(name = "most_popular_color") var backgroundColor: Int = 0,
     @ColumnInfo(name = "primary_color") var tintColorForLightBg: Int = 0,
     @ColumnInfo(name = "secondary_color") var tintColorForDarkBg: Int = 0,
@@ -78,10 +78,20 @@ data class Podcast(
     @ColumnInfo(name = "licensing") var licensing: Licensing = Licensing.KEEP_EPISODES,
     @ColumnInfo(name = "isPaid") var isPaid: Boolean = false,
     @Embedded(prefix = "bundle") var singleBundle: Bundle? = null,
-    @Ignore val episodes: MutableList<Episode> = mutableListOf()
+    @Ignore val episodes: MutableList<PodcastEpisode> = mutableListOf()
 ) : Serializable {
 
     constructor() : this(uuid = "")
+
+    enum class AutoAddUpNext(val databaseInt: Int, val analyticsValue: String) {
+        OFF(0, "off"),
+        PLAY_LAST(1, "add_last"),
+        PLAY_NEXT(2, "add_first");
+
+        companion object {
+            fun fromDatabaseInt(int: Int?) = values().firstOrNull { it.databaseInt == int }
+        }
+    }
 
     companion object {
 
@@ -90,10 +100,6 @@ data class Podcast(
 
         const val AUTO_DOWNLOAD_OFF = 0
         const val AUTO_DOWNLOAD_NEW_EPISODES = 1
-
-        const val AUTO_ADD_TO_UP_NEXT_OFF = 0
-        const val AUTO_ADD_TO_UP_NEXT_PLAY_LAST = 1
-        const val AUTO_ADD_TO_UP_NEXT_PLAY_NEXT = 2
     }
 
     @Transient
@@ -104,13 +110,13 @@ data class Podcast(
         get() = autoDownloadStatus == AUTO_DOWNLOAD_NEW_EPISODES
 
     val isAutoAddToUpNextOff: Boolean
-        get() = autoAddToUpNext == AUTO_ADD_TO_UP_NEXT_OFF
+        get() = autoAddToUpNext == AutoAddUpNext.OFF
 
     val isAutoAddToUpNextPlayLast: Boolean
-        get() = autoAddToUpNext == AUTO_ADD_TO_UP_NEXT_PLAY_LAST
+        get() = autoAddToUpNext == AutoAddUpNext.PLAY_LAST
 
     val isAutoAddToUpNextPlayNext: Boolean
-        get() = autoAddToUpNext == AUTO_ADD_TO_UP_NEXT_PLAY_NEXT
+        get() = autoAddToUpNext == AutoAddUpNext.PLAY_NEXT
 
     val adapterId: Long
         get() = UUID.nameUUIDFromBytes(uuid.toByteArray()).mostSignificantBits
@@ -146,7 +152,7 @@ data class Podcast(
         return podcastCategory.split(delimiters = arrayOf("\n")).first().tryToLocalise(resources)
     }
 
-    fun addEpisode(episode: Episode) {
+    fun addEpisode(episode: PodcastEpisode) {
         this.episodes.add(episode)
     }
 

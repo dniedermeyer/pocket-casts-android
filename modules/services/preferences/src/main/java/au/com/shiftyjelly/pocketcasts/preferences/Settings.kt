@@ -4,11 +4,14 @@ import android.content.Context
 import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.work.NetworkType
 import au.com.shiftyjelly.pocketcasts.models.to.PlaybackEffects
 import au.com.shiftyjelly.pocketcasts.models.to.PodcastGrouping
 import au.com.shiftyjelly.pocketcasts.models.to.RefreshState
 import au.com.shiftyjelly.pocketcasts.models.to.SubscriptionStatus
 import au.com.shiftyjelly.pocketcasts.models.type.PodcastsSortType
+import au.com.shiftyjelly.pocketcasts.models.type.Subscription
+import au.com.shiftyjelly.pocketcasts.models.type.SubscriptionFrequency
 import au.com.shiftyjelly.pocketcasts.models.type.TrimMode
 import au.com.shiftyjelly.pocketcasts.utils.Util
 import io.reactivex.Observable
@@ -79,6 +82,7 @@ interface Settings {
         const val PREFERENCE_PODCAST_LIBRARY_SORT_NEEDS_SYNC = "podcastLibrarySortNeedsSync"
         const val PREFERENCE_SELECT_PODCAST_LIBRARY_SORT = "selectPodcastLibrarySort"
         const val PREFERENCE_WARN_WHEN_NOT_ON_WIFI = "warnWhenNotOnWifi"
+        const val PREFERENCE_SYNC_ON_METERED = "SyncWhenOnMetered"
         const val PREFERENCE_OVERRIDE_AUDIO = "overrideAudioInterruption"
         const val PREFERENCE_USE_EMBEDDED_ARTWORK = "useEmbeddedArtwork"
         const val PREFERENCE_LAST_MODIFIED = "lastModified"
@@ -129,6 +133,8 @@ interface Settings {
         const val INTENT_LINK_PROMO_CODE = "pktc://redeem/promo/"
 
         const val LOG_TAG_AUTO = "PocketCastsAuto"
+
+        const val NOTIFICATIONS_DISABLED_MESSAGE_SHOWN = "notificationsDisabledMessageShown"
     }
 
     enum class NotificationChannel(val id: String) {
@@ -276,7 +282,6 @@ interface Settings {
         fun toIndex(): Int = options.indexOf(this)
     }
 
-    val isLoggedInObservable: Observable<Boolean>
     val podcastLayoutObservable: Observable<Int>
     val podcastBadgeTypeObservable: Observable<BadgeType>
     val podcastSortTypeObservable: Observable<PodcastsSortType>
@@ -316,11 +321,14 @@ interface Settings {
     fun getSkipForwardInMs(): Long
     fun getSkipBackwardInSecs(): Int
     fun getSkipBackwardInMs(): Long
-    fun updateSkipValues()
 
     fun getLastScreenOpened(): String?
     fun setLastScreenOpened(screenId: String)
 
+    fun syncOnMeteredNetwork(): Boolean
+    fun setSyncOnMeteredNetwork(shouldSyncOnMetered: Boolean)
+    fun getWorkManagerNetworkTypeConstraint(): NetworkType
+    fun refreshPodcastsOnResume(isUnmetered: Boolean): Boolean
     fun refreshPodcastsAutomatically(): Boolean
     fun setRefreshPodcastsAutomatically(shouldRefresh: Boolean)
     fun setPodcastsSortType(sortType: PodcastsSortType, sync: Boolean)
@@ -387,21 +395,7 @@ interface Settings {
     fun isRestoreFromBackup(): Boolean
     fun setRestoreFromBackupEnded()
 
-    fun setSyncEmail(email: String)
-    fun setSyncPassword(password: String)
-    fun clearEmailAndPassword()
-    fun getSyncEmail(): String?
-    fun getSyncPassword(): String?
-    fun getSyncUuid(): String?
-    fun getSyncRefreshToken(): String?
-    fun getSyncToken(): String?
-    suspend fun getSyncTokenSuspend(): String?
-    fun isLoggedIn(): Boolean
     fun clearPlusPreferences()
-    fun getUsedAccountManager(): Boolean
-    fun setUsedAccountManager(value: Boolean)
-    fun invalidateToken()
-    fun getOldSyncDetails(): Pair<String?, String?>
 
     fun getLanguageCode(): String
 
@@ -499,6 +493,7 @@ interface Settings {
     fun getPeriodicSaveTimeMs(): Long
     fun getPodcastSearchDebounceMs(): Long
     fun getEpisodeSearchDebounceMs(): Long
+    fun isFeatureFlagSearchImprovementsEnabled(): Boolean
     fun defaultPodcastGrouping(): PodcastGrouping
     fun setDefaultPodcastGrouping(podcastGrouping: PodcastGrouping)
     fun setSkipForwardInSec(value: Int)
@@ -522,16 +517,16 @@ interface Settings {
     fun getCloudSortOrder(): CloudSortOrder
     fun getCloudAddToUpNext(): Boolean
     fun setCloudAddToUpNext(value: Boolean)
-    fun getCloudDeleteAfterPlaying(): Boolean
-    fun setCloudDeleteAfterPlaying(value: Boolean)
+    fun getDeleteLocalFileAfterPlaying(): Boolean
+    fun setDeleteLocalFileAfterPlaying(value: Boolean)
+    fun getDeleteCloudFileAfterPlaying(): Boolean
+    fun setDeleteCloudFileAfterPlaying(value: Boolean)
     fun getCloudAutoUpload(): Boolean
     fun setCloudAutoUpload(value: Boolean)
     fun getCloudAutoDownload(): Boolean
     fun setCloudAutoDownload(value: Boolean)
     fun getCachedSubscription(): SubscriptionStatus?
     fun setCachedSubscription(subscriptionStatus: SubscriptionStatus?)
-    fun getCloudDeleteCloudAfterPlaying(): Boolean
-    fun setCloudDeleteCloudAfterPlaying(value: Boolean)
     fun getCloudOnlyWifi(): Boolean
     fun setCloudOnlyWifi(value: Boolean)
     fun getAppIconId(): String?
@@ -609,4 +604,21 @@ interface Settings {
 
     fun areCustomMediaActionsVisible(): Boolean
     fun setCustomMediaActionsVisible(value: Boolean)
+
+    fun isNotificationsDisabledMessageShown(): Boolean
+    fun setNotificationsDisabledMessageShown(value: Boolean)
+
+    fun setLastSelectedSubscriptionTier(tier: Subscription.SubscriptionTier)
+    fun getLastSelectedSubscriptionTier(): Subscription.SubscriptionTier?
+
+    fun setLastSelectedSubscriptionFrequency(frequency: SubscriptionFrequency)
+    fun getLastSelectedSubscriptionFrequency(): SubscriptionFrequency?
+
+    // This boolean should be update to false when a user signs in and should be set to
+    // true once a user signs out and that sign out has been fully handled
+    // by the app. This field helps make sure the app fully handles signing a user
+    // out even if they sign out from outside the app (i.e., from the Android OS's
+    // account management settings).
+    fun setFullySignedOut(boolean: Boolean)
+    fun getFullySignedOut(): Boolean
 }

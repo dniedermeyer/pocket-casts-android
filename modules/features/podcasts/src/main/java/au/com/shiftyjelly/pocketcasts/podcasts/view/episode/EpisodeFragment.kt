@@ -29,7 +29,7 @@ import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsTrackerWrapper
 import au.com.shiftyjelly.pocketcasts.analytics.FirebaseAnalyticsTracker
 import au.com.shiftyjelly.pocketcasts.localization.helper.TimeHelper
-import au.com.shiftyjelly.pocketcasts.models.entity.Episode
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.models.type.EpisodePlayingStatus
 import au.com.shiftyjelly.pocketcasts.models.type.EpisodeStatusEnum
 import au.com.shiftyjelly.pocketcasts.models.type.EpisodeViewSource
@@ -84,7 +84,7 @@ class EpisodeFragment : BaseDialogFragment() {
             }
         }
         fun newInstance(
-            episode: Episode,
+            episode: PodcastEpisode,
             source: EpisodeViewSource,
             overridePodcastLink: Boolean = false,
             fromListUuid: String? = null,
@@ -287,12 +287,12 @@ class EpisodeFragment : BaseDialogFragment() {
                         )
                         val episodeStatus = state.episode.episodeStatus
                         binding.btnDownload.state = when (episodeStatus) {
-                            EpisodeStatusEnum.NOT_DOWNLOADED -> DownloadButton.State.NotDownloaded(downloadSize)
-                            EpisodeStatusEnum.QUEUED -> DownloadButton.State.Queued
-                            EpisodeStatusEnum.DOWNLOADING -> DownloadButton.State.Downloading(state.downloadProgress)
-                            EpisodeStatusEnum.DOWNLOAD_FAILED -> DownloadButton.State.Errored
-                            EpisodeStatusEnum.DOWNLOADED -> DownloadButton.State.Downloaded(downloadSize)
-                            else -> DownloadButton.State.Queued
+                            EpisodeStatusEnum.NOT_DOWNLOADED -> DownloadButtonState.NotDownloaded(downloadSize)
+                            EpisodeStatusEnum.QUEUED -> DownloadButtonState.Queued
+                            EpisodeStatusEnum.DOWNLOADING -> DownloadButtonState.Downloading(state.downloadProgress)
+                            EpisodeStatusEnum.DOWNLOAD_FAILED -> DownloadButtonState.Errored
+                            EpisodeStatusEnum.DOWNLOADED -> DownloadButtonState.Downloaded(downloadSize)
+                            else -> DownloadButtonState.Queued
                         }
 
                         val playbackError = state.episode.playErrorDetails
@@ -585,7 +585,8 @@ class EpisodeFragment : BaseDialogFragment() {
             state.episode,
             parentFragmentManager,
             context,
-            shouldShowPodcast = false
+            shouldShowPodcast = false,
+            analyticsTracker = analyticsTracker,
         ).show()
     }
 }

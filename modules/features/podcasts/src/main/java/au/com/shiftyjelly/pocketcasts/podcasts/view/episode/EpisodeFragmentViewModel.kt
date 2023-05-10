@@ -3,17 +3,17 @@ package au.com.shiftyjelly.pocketcasts.podcasts.view.episode
 import android.content.Context
 import androidx.annotation.ColorInt
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.map
+import androidx.lifecycle.toLiveData
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsSource
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsTrackerWrapper
 import au.com.shiftyjelly.pocketcasts.analytics.EpisodeAnalytics
 import au.com.shiftyjelly.pocketcasts.analytics.FirebaseAnalyticsTracker
-import au.com.shiftyjelly.pocketcasts.models.entity.Episode
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadManager
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
@@ -37,6 +37,7 @@ import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.rx2.asFlowable
 import java.util.Date
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -61,13 +62,13 @@ class EpisodeFragmentViewModel @Inject constructor(
     lateinit var state: LiveData<EpisodeFragmentState>
     val showNotes: MutableLiveData<String> = MutableLiveData()
     lateinit var inUpNext: LiveData<Boolean>
-    val isPlaying: LiveData<Boolean> = Transformations.map(playbackManager.playbackStateLive) {
+    val isPlaying: LiveData<Boolean> = playbackManager.playbackStateLive.map {
         it.episodeUuid == episode?.uuid && it.isPlaying
     }
 
     val disposables = CompositeDisposable()
 
-    var episode: Episode? = null
+    var episode: PodcastEpisode? = null
     var isFragmentChangingConfigurations: Boolean = false
 
     fun setup(episodeUUID: String, podcastUUID: String?, forceDark: Boolean) {
@@ -86,9 +87,9 @@ class EpisodeFragmentViewModel @Inject constructor(
                 if (episode != null) {
                     Maybe.just(episode)
                 } else {
-                    episodeManager.downloadMissingEpisode(episodeUUID, podcastUUID, Episode(uuid = episodeUUID, publishedDate = Date()), podcastManager, downloadMetaData = true).flatMap { playable ->
-                        if (playable is Episode) {
-                            Maybe.just(playable)
+                    episodeManager.downloadMissingEpisode(episodeUUID, podcastUUID, PodcastEpisode(uuid = episodeUUID, publishedDate = Date()), podcastManager, downloadMetaData = true).flatMap { missingEpisode ->
+                        if (missingEpisode is PodcastEpisode) {
+                            Maybe.just(missingEpisode)
                         } else {
                             Maybe.empty()
                         }
@@ -96,20 +97,20 @@ class EpisodeFragmentViewModel @Inject constructor(
                 }
             }
         } else {
-            Maybe.empty<Episode>()
+            Maybe.empty()
         }
 
         val stateObservable: Flowable<EpisodeFragmentState> = episodeManager.findByUuidRx(episodeUUID)
             .switchIfEmpty(onEmptyHandler)
             .flatMapPublisher { episode ->
-                val zipper: Function3<Episode, Podcast, Float, EpisodeFragmentState> = Function3 { episodeLoaded: Episode, podcast: Podcast, downloadProgress: Float ->
+                val zipper: Function3<PodcastEpisode, Podcast, Float, EpisodeFragmentState> = Function3 { episodeLoaded: PodcastEpisode, podcast: Podcast, downloadProgress: Float ->
                     val tintColor = podcast.getTintColor(isDarkTheme)
                     val podcastColor = podcast.getTintColor(isDarkTheme)
                     EpisodeFragmentState.Loaded(episodeLoaded, podcast, tintColor, podcastColor, downloadProgress)
                 }
                 loadShowNotes(episode)
                 return@flatMapPublisher Flowable.combineLatest(
-                    episodeManager.observeByUuid(episodeUUID),
+                    episodeManager.observeByUuid(episodeUUID).asFlowable(),
                     podcastManager.findPodcastByUuidRx(episode.podcastUuid).toFlowable(),
                     progressUpdatesObservable,
                     zipper
@@ -120,11 +121,11 @@ class EpisodeFragmentViewModel @Inject constructor(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeOn(Schedulers.io())
 
-        state = LiveDataReactiveStreams.fromPublisher(stateObservable)
+        state = stateObservable.toLiveData()
 
         val inUpNextObservable = playbackManager.upNextQueue.changesObservable.toFlowable(BackpressureStrategy.LATEST)
             .map { upNext -> (upNext is UpNextQueue.State.Loaded) && (upNext.episode == episode || upNext.queue.map { it.uuid }.contains(episodeUUID)) }
-        inUpNext = LiveDataReactiveStreams.fromPublisher(inUpNextObservable)
+        inUpNext = inUpNextObservable.toLiveData()
     }
 
     override fun onCleared() {
@@ -132,7 +133,7 @@ class EpisodeFragmentViewModel @Inject constructor(
         disposables.clear()
     }
 
-    fun loadShowNotes(episode: Episode) {
+    fun loadShowNotes(episode: PodcastEpisode) {
         serverShowNotesManager.loadShowNotes(
             episode.uuid,
             object : CachedServerCallback<String> {
@@ -178,7 +179,7 @@ class EpisodeFragmentViewModel @Inject constructor(
                     episodeManager.stopDownloadAndCleanUp(it, "episode card")
                     analyticsEvent = AnalyticsEvent.EPISODE_DOWNLOAD_CANCELLED
                 } else if (!it.isDownloaded) {
-                    it.autoDownloadStatus = Episode.AUTO_DOWNLOAD_STATUS_MANUAL_OVERRIDE_WIFI
+                    it.autoDownloadStatus = PodcastEpisode.AUTO_DOWNLOAD_STATUS_MANUAL_OVERRIDE_WIFI
                     downloadManager.addEpisodeToQueue(it, "episode card", true)
                     analyticsEvent = AnalyticsEvent.EPISODE_DOWNLOAD_QUEUED
                 }
@@ -192,12 +193,16 @@ class EpisodeFragmentViewModel @Inject constructor(
 
     fun markAsPlayedClicked(isOn: Boolean) {
         launch {
+            val event: AnalyticsEvent
             episode?.let { episode ->
                 if (isOn) {
+                    event = AnalyticsEvent.EPISODE_MARKED_AS_PLAYED
                     episodeManager.markAsPlayed(episode, playbackManager, podcastManager)
                 } else {
+                    event = AnalyticsEvent.EPISODE_MARKED_AS_UNPLAYED
                     episodeManager.markAsNotPlayed(episode)
                 }
+                episodeAnalytics.trackEvent(event, source, episode.uuid)
             }
         }
     }
@@ -207,15 +212,15 @@ class EpisodeFragmentViewModel @Inject constructor(
             return if (!isOn) {
                 launch {
                     if (addLast) {
-                        playbackManager.playLast(episode)
+                        playbackManager.playLast(episode = episode, source = source)
                     } else {
-                        playbackManager.playNext(episode)
+                        playbackManager.playNext(episode = episode, source = source)
                     }
                 }
 
                 true
             } else {
-                playbackManager.removeEpisode(episode)
+                playbackManager.removeEpisode(episodeToRemove = episode, source = source)
 
                 false
             }
@@ -241,8 +246,10 @@ class EpisodeFragmentViewModel @Inject constructor(
             episode?.let { episode ->
                 if (isOn) {
                     episodeManager.archive(episode, playbackManager)
+                    episodeAnalytics.trackEvent(AnalyticsEvent.EPISODE_ARCHIVED, source, episode.uuid)
                 } else {
                     episodeManager.unarchive(episode)
+                    episodeAnalytics.trackEvent(AnalyticsEvent.EPISODE_UNARCHIVED, source, episode.uuid)
                 }
             }
         }
@@ -278,6 +285,8 @@ class EpisodeFragmentViewModel @Inject constructor(
     fun starClicked() {
         episode?.let { episode ->
             episodeManager.toggleStarEpisodeAsync(episode)
+            val event = if (episode.isStarred) AnalyticsEvent.EPISODE_UNSTARRED else AnalyticsEvent.EPISODE_STARRED
+            episodeAnalytics.trackEvent(event, source, episode.uuid)
         }
     }
 
@@ -288,6 +297,6 @@ class EpisodeFragmentViewModel @Inject constructor(
 }
 
 sealed class EpisodeFragmentState {
-    data class Loaded(val episode: Episode, val podcast: Podcast, @ColorInt val tintColor: Int, @ColorInt val podcastColor: Int, val downloadProgress: Float) : EpisodeFragmentState()
+    data class Loaded(val episode: PodcastEpisode, val podcast: Podcast, @ColorInt val tintColor: Int, @ColorInt val podcastColor: Int, val downloadProgress: Float) : EpisodeFragmentState()
     data class Error(val error: Throwable) : EpisodeFragmentState()
 }

@@ -1,11 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Translation-Revision-Date: 2023-01-17 10:54:03+0000
+Translation-Revision-Date: 2023-04-25 12:54:19+0000
 Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);
 Generator: GlotPress/2.4.0-alpha
 Language: ru
 -->
 <resources>
+    <string name="episode_downloading">Скачивание…</string>
+    <string name="episode_in_up_next">Далее</string>
+    <string name="onboarding_plus_feature_gratitude_title">Бесконечная благодарность всей команде Pocket Casts</string>
+    <string name="onboarding_plus_features_description">Получите доступ к эксклюзивным функциям и опциям настройки и выйдите на новый уровень прослушивания подкастов.</string>
+    <string name="onboarding_patron_feature_special_icons_title">Специальные значки приложения Pocket Casts</string>
+    <string name="onboarding_patron_feature_profile_badge_title">Значок профиля спонсора</string>
+    <string name="onboarding_patron_feature_cloud_storage_title">Облачное хранилище 50 ГБ</string>
+    <string name="onboarding_patron_feature_everything_in_plus_title">Все в Plus</string>
+    <string name="onboarding_patron_features_description">Став спонсором Pocket Casts, вы поспособствуете дальнейшей работе по обеспечению наилучших возможностей подкастинга из доступных.</string>
+    <string name="onboarding_patron_features_title">Верите в нас и хотите поддержать?</string>
+    <string name="slash_month">в месяц</string>
+    <string name="slash_year">/год</string>
+    <string name="server_user_delete_account_with_sub_failed">У вашей учетной записи есть активная подписка Pocket Casts Plus. Отмените подписку перед удалением учетной записи.</string>
+    <string name="server_user_change_email_success">Адрес эл. почты изменен.</string>
+    <string name="server_user_email_verification_failed">Не удалось выполнить проверку адреса эл. почты.</string>
+    <string name="server_user_email_success">Электронное письмо успешно отправлено.</string>
+    <string name="server_user_email_failed">Ошибка отправки эл. письма.</string>
+    <string name="server_promo_winback_no_plus">Не удалось активировать акцию, так как в настоящее время у вас нет подписки Plus.</string>
+    <string name="server_login_password_change_failed">Не удается изменить пароль.</string>
+    <string name="server_login_password_change_success">Пароль изменен.</string>
+    <string name="add_to_up_next_question">Добавить в следующие?</string>
+    <string name="wear_show_password">Показать пароль</string>
+    <string name="wear_hide_password">Скрыть пароль</string>
+    <string name="settings_metered_data_warning">Предупреждение о трафике</string>
+    <string name="stream_warning_summary_short">Трансляция будет расходовать трафик. Продолжить?</string>
+    <string name="removed">Удалено</string>
+    <string name="mark_unplayed">Отметить как непрослушанный</string>
+    <string name="log_out">Выйти</string>
+    <string name="account">Учётная запись</string>
+    <string name="profile_just_sign_out">Только выйти</string>
+    <string name="profile_clear_data_would_you_also_like_question">Удалить все данные из приложения?</string>
+    <string name="profile_clear_data_question">Удалить данные?</string>
+    <string name="profile_clear_data">Удалить данные</string>
+    <string name="discover_sponsored">Реклама</string>
+    <string name="podcasts_all">Все подкасты</string>
+    <string name="search_results_all_podcasts">Все подкасты</string>
+    <string name="search_results_all_episodes">Все выпуски</string>
+    <string name="search_history_row_type_episode_subtitle">Выпуск \u2022 %s \u2022 %s</string>
+    <string name="search_show_all">Показать всё</string>
+    <string name="podcast">Подкаст</string>
+    <string name="search_history_row_type_podcast_subtitle">Подкаст \u2022 %s</string>
+    <string name="search_history_row_type_folder_subtitle">Папка \u2022 %s</string>
+    <string name="search_history_recent_searches">Последний поиск</string>
+    <string name="search_history_clear_all_confirmation_message">Действительно очистить всю историю поиска?</string>
+    <string name="search_history_clear_all_confirm_button_title">Очистить историю поиска</string>
+    <string name="search_podcasts_or_add_url">Ищите подкасты или добавляйте URL-адрес RSS</string>
+    <string name="error_opening_links_activity_not_found">Похоже, у вас нет приложения для просмотра этого контента.</string>
+    <string name="notifications_blocked_warning">Уведомления заблокированы. Вы можете изменить разрешение в настройках.</string>
+    <string name="settings_media_actions_show_subtitle">Отображение пользовательских действий с медиафайлами в соответствующих уведомлениях в Android 13 и Android Auto.</string>
+    <string name="settings_media_actions_show_title">Показывать пользовательские действия с медиафайлами</string>
+    <string name="settings_media_actions_customise">Настроить действия с медиафайлами</string>
+    <string name="settings_media_actions_prioritize_subtitle">Будут отображаться основные действия.</string>
+    <string name="settings_media_actions_prioritize_title">Расставьте действия с медиафайлами в приоритетном порядке</string>
+    <string name="plus_take_your_podcasting_to_next_level">Получите доступ к эксклюзивным функциям и опциям настройки и выйдите на новый уровень прослушивания подкастов.</string>
     <string name="onboarding_recommendations_more">Другие %s</string>
     <string name="filter_id_or_title">ID или название фильтра</string>
     <string name="filter_title">Название фильтра</string>
@@ -57,9 +111,6 @@ Language: ru
     <string name="profile_cancel_confirm_sub_expiry_date_fallback">срок действия</string>
     <string name="profile_cancel_confirm_sub_expiry">Ваша текущая подписка будет действовать до %1$s.</string>
     <string name="profile_cancel_confirm_subtitle">При этом ваш тарифный план изменится на бесплатный.</string>
-    <string name="settings_your_top_actions_will_be_available_in_your_notif_and_android_auto_player">Ваши самые частые действия будут доступны в уведомлении Android 13 и в плеере Android Auto.</string>
-    <string name="settings_rearrange_media_actions">Изменить порядок действий с медиафайлами</string>
-    <string name="settings_prioritize_your_notification_actions">Изменить приоритет действий с уведомлениями</string>
     <string name="settings_other_media_actions">Другие действия с медиафайлами</string>
     <string name="settings_customize_buttons_displayed_in_android_13_notification_and_android_auto">Настроить кнопки, отображаемые в уведомлениях о воспроизведении Android 13 и в Android Auto.</string>
     <string name="podcast_not_subscribed">Нет подписки</string>
@@ -99,8 +150,6 @@ Language: ru
     <string name="end_of_year_stories_failed">Не удаётся загрузить итоги года, проверьте подключение к Интернету</string>
     <string name="onboarding_plus_feature_themes_icons_text">Покажите себя во всей красе. Эксклюзивные темы и значки только для членов клуба Plus.</string>
     <string name="onboarding_plus_feature_themes_icons_title">Темы и значки</string>
-    <string name="onboarding_plus_feature_hide_ads_text">Когда на странице нет рекламы, на ней помещается больше контента, который вам нравится.</string>
-    <string name="onboarding_plus_feature_hide_ads_title">Скрыть рекламу</string>
     <string name="onboarding_plus_feature_cloud_storage_text">Загрузите файлы в облачное хранилище и пользуйтесь ими, где бы вы ни находились.</string>
     <string name="onboarding_plus_feature_cloud_storage_title">Облачное хранилище 10 ГБ</string>
     <string name="onboarding_plus_feature_folders_text">Распределите подкасты по папкам и синхронизируйте их на всех устройствах.</string>
@@ -109,7 +158,7 @@ Language: ru
     <string name="onboarding_plus_feature_desktop_apps_title">Приложения для настольных систем</string>
     <string name="onboarding_upgrade_unlock_all_features">Разблокировать все функции</string>
     <string name="onboarding_upgrade_exclusive_features_and_options">Получите доступ к эксклюзивным функциям и опциям настройки</string>
-    <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Всё, что вы любите в Pocket Casts, и не только</string>
+    <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Всё, что вам нравится в Pocket Casts, и ещё больше</string>
     <string name="onboarding_recommendations_import">Импорт</string>
     <string name="onboarding_recommendations_make_pocket_casts_yours">Переходите на Pocket Casts. Выберите любимые подкасты или импортируйте их из другого плеера. Вы всегда сможете сделать это позже.</string>
     <string name="onboarding_recommendations_find_favorite_podcasts">Найти любимые подкасты</string>
@@ -123,6 +172,7 @@ Language: ru
     <string name="onboarding_discover_your_next_favorite_podcast">Найдите ещё один любимый подкаст</string>
     <string name="onboarding_continue_with_google">Продолжить с помощью Google</string>
     <string name="onboarding_welcome_back">С возвращением</string>
+    <string name="log_in">Войти</string>
     <string name="end_of_year_create_account_to_see">Сохраняйте свои подкасты в облаке, получайте отчёт за год и синхронизируйте данные о прослушивании с другими устройствами.</string>
     <string name="end_of_year_story_top_categories_share_text">Рубрики подкастов, которые я слушаю чаще всего</string>
     <string name="end_of_year_story_top_categories">Ваши любимые рубрики</string>
@@ -628,7 +678,7 @@ Language: ru
     <string name="settings_podcast_artwork">Тема подкаста</string>
     <string name="settings_playback_resumption_summary">Если опция включена, Pocket Casts вернется немного назад в возобновляемых выпусках, чтобы вам было удобнее наверстать упущенное.</string>
     <string name="settings_playback_resumption">Умное возобновление воспроизведения</string>
-    <string name="settings_notification_vibrate_never">Следующие выпуски</string>
+    <string name="settings_notification_vibrate_never">Никогда</string>
     <string name="settings_notification_vibrate_in_silent">Только без звука</string>
     <string name="settings_notification_vibrate_new_episodes">Следующие выпуски</string>
     <string name="settings_notification_vibrate">Вибрация при</string>

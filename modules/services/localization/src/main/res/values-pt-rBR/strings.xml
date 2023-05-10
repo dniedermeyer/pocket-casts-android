@@ -1,11 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Translation-Revision-Date: 2023-01-17 14:54:03+0000
+Translation-Revision-Date: 2023-04-24 16:54:22+0000
 Plural-Forms: nplurals=2; plural=(n > 1);
 Generator: GlotPress/2.4.0-alpha
 Language: pt_BR
 -->
 <resources>
+    <string name="episode_downloading">Fazendo download</string>
+    <string name="episode_in_up_next">Na lista de próximos</string>
+    <string name="onboarding_plus_feature_gratitude_title">A eterna gratidão de todos aqui no Pocket Casts</string>
+    <string name="onboarding_plus_features_description">Leve sua experiência de criação de podcasts para um outro nível com acesso exclusivo a funcionalidades e opções de personalização.</string>
+    <string name="onboarding_patron_feature_special_icons_title">Ícones especiais do aplicativo Pocket Casts</string>
+    <string name="onboarding_patron_feature_profile_badge_title">Selo perfil de apoiadores</string>
+    <string name="onboarding_patron_feature_cloud_storage_title">50 GB de armazenamento na nuvem</string>
+    <string name="onboarding_patron_feature_everything_in_plus_title">Tudo no Plus</string>
+    <string name="onboarding_patron_features_description">Torne-se um apoiador do Pocket Casts e ajude-nos a continuar oferecendo a melhor experiência de podcast disponível.</string>
+    <string name="onboarding_patron_features_title">Acredita no nosso trabalho e quer mostrar seu apoio?</string>
+    <string name="slash_month">/mês</string>
+    <string name="slash_year">/ano</string>
+    <string name="server_user_delete_account_with_sub_failed">Sua conta tem uma assinatura do Pocket Casts Plus ativa. Cancele antes de excluir sua conta.</string>
+    <string name="server_user_change_email_success">Seu e-mail foi alterado com sucesso.</string>
+    <string name="server_user_email_verification_failed">A verificação de e-mail falhou.</string>
+    <string name="server_user_email_success">E-mail enviado com sucesso.</string>
+    <string name="server_user_email_failed">Ocorreu um erro ao enviar o e-mail.</string>
+    <string name="server_promo_winback_no_plus">Não foi possível resgatar esse código promocional porque você não é assinante do Plus.</string>
+    <string name="server_login_password_change_failed">Não é possível alterar a senha.</string>
+    <string name="server_login_password_change_success">Senha alterada com sucesso</string>
+    <string name="add_to_up_next_question">Adicionar aos próximos?</string>
+    <string name="wear_show_password">Mostrar senha</string>
+    <string name="wear_hide_password">Ocultar senha</string>
+    <string name="settings_metered_data_warning">Aviso de dados limitados</string>
+    <string name="stream_warning_summary_short">Reproduzir consumirá seus dados. Continuar?</string>
+    <string name="removed">Removido</string>
+    <string name="mark_unplayed">Marcar como não reproduzido</string>
+    <string name="log_out">Fazer logout</string>
+    <string name="account">Conta</string>
+    <string name="profile_just_sign_out">Só fazer logout</string>
+    <string name="profile_clear_data_would_you_also_like_question">Você gostaria de limpar todos os dados do aplicativo?</string>
+    <string name="profile_clear_data_question">Limpar dados?</string>
+    <string name="profile_clear_data">Limpar dados</string>
+    <string name="discover_sponsored">Patrocinado</string>
+    <string name="podcasts_all">Todos os podcasts</string>
+    <string name="search_results_all_podcasts">Todos os podcasts</string>
+    <string name="search_results_all_episodes">Todos os episódios</string>
+    <string name="search_history_row_type_episode_subtitle">Episódio \u2022 %s \u2022 %s</string>
+    <string name="search_show_all">Mostrar tudo</string>
+    <string name="podcast">Podcast</string>
+    <string name="search_history_row_type_podcast_subtitle">Podcast \u2022 %s</string>
+    <string name="search_history_row_type_folder_subtitle">Pasta \u2022 %s</string>
+    <string name="search_history_recent_searches">Pesquisas recentes</string>
+    <string name="search_history_clear_all_confirmation_message">Tem certeza de que deseja limpar todo o seu histórico de pesquisas?</string>
+    <string name="search_history_clear_all_confirm_button_title">Limpar histórico de pesquisas</string>
+    <string name="search_podcasts_or_add_url">Pesquise podcasts ou adicione URL de RSS</string>
+    <string name="error_opening_links_activity_not_found">Parece que você não tem um aplicativo capaz de visualizar este conteúdo.</string>
+    <string name="notifications_blocked_warning">As notificações estão bloqueadas. Você pode atualizar a permissão em Configurações.</string>
+    <string name="settings_media_actions_show_subtitle">Mostre ações de mídia personalizadas nas notificações de mídia do Android 13 e no Android Auto.</string>
+    <string name="settings_media_actions_show_title">Mostrar ações de mídia personalizadas</string>
+    <string name="settings_media_actions_customise">Personalizar ações de mídia</string>
+    <string name="settings_media_actions_prioritize_subtitle">Suas principais ações ficarão disponíveis.</string>
+    <string name="settings_media_actions_prioritize_title">Priorizar suas ações de mídia personalizadas</string>
+    <string name="plus_take_your_podcasting_to_next_level">Leve sua experiência de criação de podcasts para um outro nível com acesso exclusivo a funcionalidades e opções de personalização.</string>
     <string name="onboarding_recommendations_more">Mais %s</string>
     <string name="filter_id_or_title">Título ou ID do filtro</string>
     <string name="filter_title">Título do filtro</string>
@@ -57,9 +111,6 @@ Language: pt_BR
     <string name="profile_cancel_confirm_sub_expiry_date_fallback">sua data de expiração</string>
     <string name="profile_cancel_confirm_sub_expiry">Sua assinatura atual permanecerá ativa até %1$s.</string>
     <string name="profile_cancel_confirm_subtitle">Esta opção mudará seu plano para uma conta gratuita.</string>
-    <string name="settings_your_top_actions_will_be_available_in_your_notif_and_android_auto_player">Suas ações principais estarão disponíveis na notificação do Android 13 e no reprodutor do Android Auto.</string>
-    <string name="settings_rearrange_media_actions">Reorganizar ações de mídia</string>
-    <string name="settings_prioritize_your_notification_actions">Priorizar ações de notificação</string>
     <string name="settings_other_media_actions">Outras ações de mídia</string>
     <string name="settings_customize_buttons_displayed_in_android_13_notification_and_android_auto">Personalize os botões exibidos nas notificações de reprodução do Android 13 e Android Auto.</string>
     <string name="podcast_not_subscribed">Não assinado</string>
@@ -99,8 +150,6 @@ Language: pt_BR
     <string name="end_of_year_stories_failed">Não é possível carregar seus stories de fim de ano. Verifique sua conexão com a Internet.</string>
     <string name="onboarding_plus_feature_themes_icons_text">Expresse sua individualidade. Temas e ícones exclusivos para o Plus.</string>
     <string name="onboarding_plus_feature_themes_icons_title">Temas e ícones</string>
-    <string name="onboarding_plus_feature_hide_ads_text">Guia Explorar sem publicidade, para se alinhar mais ao seu gosto.</string>
-    <string name="onboarding_plus_feature_hide_ads_title">Ocultar anúncios</string>
     <string name="onboarding_plus_feature_cloud_storage_text">Faça upload dos seus arquivos na nuvem para acessá-los em qualquer lugar.</string>
     <string name="onboarding_plus_feature_cloud_storage_title">10 GB de armazenamento na nuvem</string>
     <string name="onboarding_plus_feature_folders_text">Organize seus podcasts em pastas e mantenha a sincronização em todos os seus dispositivos.</string>
@@ -109,7 +158,7 @@ Language: pt_BR
     <string name="onboarding_plus_feature_desktop_apps_title">Aplicativos para desktop</string>
     <string name="onboarding_upgrade_unlock_all_features">Obtenha todas as funcionalidades</string>
     <string name="onboarding_upgrade_exclusive_features_and_options">Receba acesso a funcionalidades exclusivas e opções de personalização</string>
-    <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Tudo o que você adora no Pocket Casts e muito mais</string>
+    <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Tudo o que você adora no Pocket Casts e muito mais</string>
     <string name="onboarding_recommendations_import">Importar</string>
     <string name="onboarding_recommendations_make_pocket_casts_yours">Deixe o Pocket Casts com a sua cara. Basta selecionar seus podcasts favoritos ou importá-los de outro reprodutor de podcast. Você pode fazer isso a qualquer momento.</string>
     <string name="onboarding_recommendations_find_favorite_podcasts">Encontre seus podcasts favoritos</string>
@@ -123,6 +172,7 @@ Language: pt_BR
     <string name="onboarding_discover_your_next_favorite_podcast">Descubra seu próximo podcast favorito</string>
     <string name="onboarding_continue_with_google">Continue com o Google</string>
     <string name="onboarding_welcome_back">Que bom que você voltou</string>
+    <string name="log_in">Fazer login</string>
     <string name="end_of_year_create_account_to_see">Salve seus podcasts na nuvem, receba sua avaliação de fim de ano e sincronize seu progresso com outros dispositivos.</string>
     <string name="end_of_year_story_top_categories_share_text">Categorias dos podcasts que mais ouvi</string>
     <string name="end_of_year_story_top_categories">Suas principais categorias</string>
@@ -628,7 +678,7 @@ Language: pt_BR
     <string name="settings_podcast_artwork">Arte do podcast</string>
     <string name="settings_playback_resumption_summary">Se ativada, o Pocket Casts volta um pouco os episódios quando você os retoma para que você acompanhe melhor.</string>
     <string name="settings_playback_resumption">Retomada inteligente de reprodução</string>
-    <string name="settings_notification_vibrate_never">Novos episódios</string>
+    <string name="settings_notification_vibrate_never">Nunca</string>
     <string name="settings_notification_vibrate_in_silent">Apenas no modo silencioso</string>
     <string name="settings_notification_vibrate_new_episodes">Novos episódios</string>
     <string name="settings_notification_vibrate">Vibrar quando</string>

@@ -14,9 +14,10 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import androidx.work.ListenableWorker
+import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsSource
 import au.com.shiftyjelly.pocketcasts.localization.BuildConfig
-import au.com.shiftyjelly.pocketcasts.models.entity.Episode
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.models.to.RefreshState
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.R
@@ -34,15 +35,14 @@ import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.subscription.SubscriptionManager
 import au.com.shiftyjelly.pocketcasts.repositories.sync.NotificationBroadcastReceiver
 import au.com.shiftyjelly.pocketcasts.repositories.sync.PodcastSyncProcess
+import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.repositories.user.StatsManager
 import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
 import au.com.shiftyjelly.pocketcasts.servers.RefreshResponse
 import au.com.shiftyjelly.pocketcasts.servers.ServerCallback
 import au.com.shiftyjelly.pocketcasts.servers.ServerManager
 import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServerManagerImpl
-import au.com.shiftyjelly.pocketcasts.servers.sync.SyncServerManager
-import au.com.shiftyjelly.pocketcasts.servers.sync.old.SyncOldServerManager
-import au.com.shiftyjelly.pocketcasts.servers.sync.old.UserNotLoggedInException
+import au.com.shiftyjelly.pocketcasts.servers.sync.update.UserNotLoggedInException
 import au.com.shiftyjelly.pocketcasts.utils.Network
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import dagger.hilt.EntryPoint
@@ -68,8 +68,6 @@ class RefreshPodcastsThread(
         fun playlistManager(): PlaylistManager
         fun statsManager(): StatsManager
         fun fileStorage(): FileStorage
-        fun syncOldServerManager(): SyncOldServerManager
-        fun syncServerManager(): SyncServerManager
         fun podcastCacheServerManager(): PodcastCacheServerManagerImpl
         fun userEpisodeManager(): UserEpisodeManager
         fun subscriptionManager(): SubscriptionManager
@@ -80,6 +78,7 @@ class RefreshPodcastsThread(
         fun downloadManager(): DownloadManager
         fun notificationHelper(): NotificationHelper
         fun userManager(): UserManager
+        fun syncManager(): SyncManager
     }
 
     @Volatile
@@ -249,12 +248,11 @@ class RefreshPodcastsThread(
             statsManager = entryPoint.statsManager(),
             fileStorage = entryPoint.fileStorage(),
             playbackManager = playbackManager,
-            syncOldServerManager = entryPoint.syncOldServerManager(),
-            syncServerManager = entryPoint.syncServerManager(),
             podcastCacheServerManager = entryPoint.podcastCacheServerManager(),
             userEpisodeManager = entryPoint.userEpisodeManager(),
             subscriptionManager = entryPoint.subscriptionManager(),
-            folderManager = entryPoint.folderManager()
+            folderManager = entryPoint.folderManager(),
+            syncManager = entryPoint.syncManager(),
         )
         val startTime = SystemClock.elapsedRealtime()
         val syncCompletable = sync.run()
@@ -290,7 +288,7 @@ class RefreshPodcastsThread(
 
         var newEpisodeCount = 0
 
-        val episodesToAddToUpNext: MutableList<Pair<AddToUpNext, Episode>> = mutableListOf()
+        val episodesToAddToUpNext: MutableList<Pair<AddToUpNext, PodcastEpisode>> = mutableListOf()
         val episodeUuidsAdded = ArrayList<String>()
 
         for (podcastUuid in result.getPodcastsWithUpdates()) {
@@ -337,16 +335,16 @@ class RefreshPodcastsThread(
             episodesToAddToUpNext.forEach {
                 if (playbackManager.upNextQueue.queueEpisodes.size < upNextLimit) {
                     when (it.first) {
-                        AddToUpNext.Next -> playbackManager.playNext(it.second)
-                        AddToUpNext.Last -> playbackManager.playLast(it.second)
+                        AddToUpNext.Next -> playbackManager.playNext(it.second, source = AnalyticsSource.UNKNOWN, userInitiated = false)
+                        AddToUpNext.Last -> playbackManager.playLast(it.second, source = AnalyticsSource.UNKNOWN, userInitiated = false)
                     }
                 } else if (playbackManager.upNextQueue.queueEpisodes.size >= upNextLimit &&
                     settings.getAutoAddUpNextLimitBehaviour() == Settings.AutoAddUpNextLimitBehaviour.ONLY_ADD_TO_TOP &&
                     it.first == AddToUpNext.Next
                 ) {
-                    playbackManager.playNext(it.second)
+                    playbackManager.playNext(it.second, source = AnalyticsSource.UNKNOWN, userInitiated = false)
                     playbackManager.upNextQueue.queueEpisodes.lastOrNull()?.let { lastEpisode ->
-                        playbackManager.removeEpisode(lastEpisode)
+                        playbackManager.removeEpisode(lastEpisode, source = AnalyticsSource.UNKNOWN, userInitiated = false)
                     }
                 }
             }
@@ -394,7 +392,7 @@ class RefreshPodcastsThread(
             val intentId = 675578
 
             try {
-                val notificationsEpisodeAndPodcast = ArrayList<Pair<Episode, Podcast>>()
+                val notificationsEpisodeAndPodcast = ArrayList<Pair<PodcastEpisode, Podcast>>()
 
                 val episodes = episodeManager.findNotificationEpisodes(lastSeen)
                 for (episode in episodes) {
@@ -446,7 +444,7 @@ class RefreshPodcastsThread(
         @Suppress("NAME_SHADOWING", "DEPRECATION")
         private fun showEpisodeNotification(
             podcast: Podcast,
-            episode: Episode,
+            episode: PodcastEpisode,
             episodeIndex: Int,
             intentId: Int,
             isGroupNotification: Boolean,
@@ -552,7 +550,7 @@ class RefreshPodcastsThread(
             manager.notify(notificationTag, NotificationBroadcastReceiver.NOTIFICATION_ID, notification)
         }
 
-        private fun buildNotificationIntent(intentId: Int, intentName: String, episode: Episode, notificationTag: String, context: Context): PendingIntent {
+        private fun buildNotificationIntent(intentId: Int, intentName: String, episode: PodcastEpisode, notificationTag: String, context: Context): PendingIntent {
             val intent = Intent(context, NotificationBroadcastReceiver::class.java)
             intent.action = (System.currentTimeMillis() + intentId).toString()
             intent.putExtra(NotificationBroadcastReceiver.INTENT_EXTRA_ACTION, intentName)

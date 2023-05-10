@@ -1,11 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Translation-Revision-Date: 2023-01-17 10:54:03+0000
+Translation-Revision-Date: 2023-04-26 09:54:03+0000
 Plural-Forms: nplurals=1; plural=0;
 Generator: GlotPress/2.4.0-alpha
 Language: ja_JP
 -->
 <resources>
+    <string name="episode_downloading">ダウンロードしています</string>
+    <string name="episode_in_up_next">次</string>
+    <string name="onboarding_plus_feature_gratitude_title">Pocket Casts をお使いの皆さまに感謝の気持ちを込めて</string>
+    <string name="onboarding_plus_features_description">専用の機能やカスタマイズオプションを使用して、あなたのポッドキャスト体験をさらなるレベルに引き上げることができます。</string>
+    <string name="onboarding_patron_feature_special_icons_title">特別な Pocket Casts アプリのアイコン</string>
+    <string name="onboarding_patron_feature_profile_badge_title">サポーターのプロフィールバッジ</string>
+    <string name="onboarding_patron_feature_cloud_storage_title">50GB のクラウドストレージ</string>
+    <string name="onboarding_patron_feature_everything_in_plus_title">Plus の全機能</string>
+    <string name="onboarding_patron_features_description">優れたポッドキャスト体験を継続的に提供するには、Pocket Casts サポーターのご支援が必要です。</string>
+    <string name="onboarding_patron_features_title">Pocket Casts のサービスにご賛同いただける皆さまのサポートをお待ちしています。</string>
+    <string name="slash_month">/ 月</string>
+    <string name="slash_year">/ 年</string>
+    <string name="server_user_delete_account_with_sub_failed">お使いのアカウントに有効な Pocket Casts Plus サブスクリプションがあります。 アカウントを削除する前に、このサブスクリプションをキャンセルしてください。</string>
+    <string name="server_user_change_email_success">メールアドレスが変更されました。</string>
+    <string name="server_user_email_verification_failed">メールの認証に失敗しました。</string>
+    <string name="server_user_email_success">メールを送信しました。</string>
+    <string name="server_user_email_failed">メールの送信中にエラーが発生しました。</string>
+    <string name="server_promo_winback_no_plus">お客様は現在 Plus に登録していないため、このプロモーションを利用できません。</string>
+    <string name="server_login_password_change_failed">パスワードを変更できません</string>
+    <string name="server_login_password_change_success">パスワードを変更しました</string>
+    <string name="add_to_up_next_question">次のエピソードに追加しますか ?</string>
+    <string name="wear_show_password">パスワードを表示</string>
+    <string name="wear_hide_password">パスワードを隠す</string>
+    <string name="settings_metered_data_warning">従量制データの警告</string>
+    <string name="stream_warning_summary_short">ストリーミングではデータが消費されます。 続行しますか ?</string>
+    <string name="removed">削除</string>
+    <string name="mark_unplayed">未再生としてマーク</string>
+    <string name="log_out">ログアウト</string>
+    <string name="account">アカウント</string>
+    <string name="profile_just_sign_out">ログアウトしました</string>
+    <string name="profile_clear_data_would_you_also_like_question">アプリからすべてのデータも消去しますか ?</string>
+    <string name="profile_clear_data_question">データを消去しますか ?</string>
+    <string name="profile_clear_data">データを消去</string>
+    <string name="discover_sponsored">スポンサー</string>
+    <string name="podcasts_all">すべてのポッドキャスト</string>
+    <string name="search_results_all_podcasts">すべてのポッドキャスト</string>
+    <string name="search_results_all_episodes">すべてのエピソード</string>
+    <string name="search_history_row_type_episode_subtitle">エピソード \u2022%s \u2022%s</string>
+    <string name="search_show_all">すべて表示</string>
+    <string name="podcast">ポッドキャスト</string>
+    <string name="search_history_row_type_podcast_subtitle">ポッドキャスト \u2022 %s</string>
+    <string name="search_history_row_type_folder_subtitle">フォルダー \u2022 %s</string>
+    <string name="search_history_recent_searches">最近の検索</string>
+    <string name="search_history_clear_all_confirmation_message">検索履歴をすべて削除してもよろしいですか ?</string>
+    <string name="search_history_clear_all_confirm_button_title">検索履歴を削除</string>
+    <string name="search_podcasts_or_add_url">ポッドキャストを検索または RSS の URL を追加</string>
+    <string name="error_opening_links_activity_not_found">このコンテンツを表示できるアプリがないようです。</string>
+    <string name="notifications_blocked_warning">通知がブロックされました。 「設定」で権限を更新できます。</string>
+    <string name="settings_media_actions_show_subtitle">Android 13のメディア通知と Android Auto でカスタムメディアアクションを表示します。</string>
+    <string name="settings_media_actions_show_title">カスタムメディアアクションを表示</string>
+    <string name="settings_media_actions_customise">メディアアクションをカスタマイズ</string>
+    <string name="settings_media_actions_prioritize_subtitle">上位のアクションを利用できます。</string>
+    <string name="settings_media_actions_prioritize_title">カスタムメディアアクションに優先順位を設定</string>
+    <string name="plus_take_your_podcasting_to_next_level">専用の機能やカスタマイズオプションを使用して、あなたのポッドキャスト体験をさらなるレベルに引き上げることができます。</string>
     <string name="onboarding_recommendations_more">%sをもっと見る</string>
     <string name="filter_id_or_title">フィルター ID またはタイトル</string>
     <string name="filter_title">フィルタータイトル</string>
@@ -57,9 +111,6 @@ Language: ja_JP
     <string name="profile_cancel_confirm_sub_expiry_date_fallback">有効期限</string>
     <string name="profile_cancel_confirm_sub_expiry">現在のサブスクリプションは%1$sまで有効です。</string>
     <string name="profile_cancel_confirm_subtitle">これにより、お客様のプランが無料アカウントに変更されます。</string>
-    <string name="settings_your_top_actions_will_be_available_in_your_notif_and_android_auto_player">上位のアクションは Android 13の通知と Android Auto プレイヤーで利用できます。</string>
-    <string name="settings_rearrange_media_actions">メディアアクションを並べ替える</string>
-    <string name="settings_prioritize_your_notification_actions">通知アクションに優先順位を設定する</string>
     <string name="settings_other_media_actions">その他のメディアアクション</string>
     <string name="settings_customize_buttons_displayed_in_android_13_notification_and_android_auto">Android 13の再生通知と Android Auto に表示されるボタンをカスタマイズします。</string>
     <string name="podcast_not_subscribed">購読していません</string>
@@ -99,8 +150,6 @@ Language: ja_JP
     <string name="end_of_year_stories_failed">年末のストーリーを読み込めません。インターネット接続を確認してください。</string>
     <string name="onboarding_plus_feature_themes_icons_text">あなたの個性を表現しましょう。 Plus クラブ限定の特別なアイコンとテーマ。</string>
     <string name="onboarding_plus_feature_themes_icons_title">テーマとアイコン</string>
-    <string name="onboarding_plus_feature_hide_ads_text">広告非表示の検出では気に入ったコンテンツを増やし、気に入らないコンテンツは減らすことができます。</string>
-    <string name="onboarding_plus_feature_hide_ads_title">広告を非表示</string>
     <string name="onboarding_plus_feature_cloud_storage_text">ファイルをクラウドストレージにアップロードしてどこからでも利用できるようにします。</string>
     <string name="onboarding_plus_feature_cloud_storage_title">10GB のクラウドストレージ</string>
     <string name="onboarding_plus_feature_folders_text">ポッドキャストをフォルダーに整理し、すべてのデバイス間で同期させます。</string>
@@ -123,6 +172,7 @@ Language: ja_JP
     <string name="onboarding_discover_your_next_favorite_podcast">次のお気に入りのポッドキャストを見つける</string>
     <string name="onboarding_continue_with_google">Google で続ける</string>
     <string name="onboarding_welcome_back">おかえりなさい</string>
+    <string name="log_in">ログイン</string>
     <string name="end_of_year_create_account_to_see">ポッドキャストをクラウドに保存して、年末レビューを取得し、他の端末と進捗を同期します。</string>
     <string name="end_of_year_story_top_categories_share_text">一番聴いたポッドキャストのカテゴリー</string>
     <string name="end_of_year_story_top_categories">トップカテゴリー</string>
@@ -628,7 +678,7 @@ Language: ja_JP
     <string name="settings_podcast_artwork">ポッドキャストのアートワーク</string>
     <string name="settings_playback_resumption_summary">オンにすると、Pocket Casts でエピソードを再開したときに少し巻き戻されて再生されるため、内容に入りやすくなります。</string>
     <string name="settings_playback_resumption">スマートに再生再開</string>
-    <string name="settings_notification_vibrate_never">新規エピソード</string>
+    <string name="settings_notification_vibrate_never">なし</string>
     <string name="settings_notification_vibrate_in_silent">サイレントモードでのみ</string>
     <string name="settings_notification_vibrate_new_episodes">新規エピソード</string>
     <string name="settings_notification_vibrate">次の場合にバイブレート</string>

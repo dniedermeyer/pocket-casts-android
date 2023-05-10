@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.SimpleItemAnimator
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsSource
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsTrackerWrapper
-import au.com.shiftyjelly.pocketcasts.models.entity.Playable
+import au.com.shiftyjelly.pocketcasts.models.entity.BaseEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.UserEpisode
 import au.com.shiftyjelly.pocketcasts.models.to.SignInState
 import au.com.shiftyjelly.pocketcasts.models.to.SubscriptionStatus
@@ -38,6 +38,7 @@ import au.com.shiftyjelly.pocketcasts.utils.extensions.dpToPx
 import au.com.shiftyjelly.pocketcasts.views.dialog.OptionsDialog
 import au.com.shiftyjelly.pocketcasts.views.extensions.setup
 import au.com.shiftyjelly.pocketcasts.views.fragments.BaseFragment
+import au.com.shiftyjelly.pocketcasts.views.fragments.BaseFragmentToolbar.ChromeCastButton.Shown
 import au.com.shiftyjelly.pocketcasts.views.helper.CloudDeleteHelper
 import au.com.shiftyjelly.pocketcasts.views.helper.EpisodeItemTouchHelper
 import au.com.shiftyjelly.pocketcasts.views.helper.NavigationIcon.BackArrow
@@ -67,7 +68,7 @@ class CloudFilesFragment : BaseFragment(), Toolbar.OnMenuItemClickListener {
 
     val adapter by lazy { EpisodeListAdapter(downloadManager, playbackManager, upNextQueue, settings, onRowClick, playButtonListener, imageLoader, multiSelectHelper, childFragmentManager) }
 
-    private val onRowClick = { episode: Playable ->
+    private val onRowClick = { episode: BaseEpisode ->
         analyticsTracker.track(AnalyticsEvent.USER_FILE_DETAIL_SHOWN)
         CloudFileBottomSheetFragment.newInstance(episode.uuid)
             .show(parentFragmentManager, "cloud_bottom_sheet")
@@ -97,6 +98,7 @@ class CloudFilesFragment : BaseFragment(), Toolbar.OnMenuItemClickListener {
         }.smallPlaceholder()
 
         playButtonListener.source = AnalyticsSource.FILES
+        multiSelectHelper.source = AnalyticsSource.FILES
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -111,7 +113,7 @@ class CloudFilesFragment : BaseFragment(), Toolbar.OnMenuItemClickListener {
             navigationIcon = BackArrow,
             activity = activity,
             theme = theme,
-            setupChromeCast = true,
+            chromeCastButton = Shown(chromeCastAnalytics),
             menu = R.menu.menu_cloudfiles
         )
         binding?.toolbar?.setOnMenuItemClickListener(this)
@@ -163,11 +165,11 @@ class CloudFilesFragment : BaseFragment(), Toolbar.OnMenuItemClickListener {
             }
         )
 
-        viewModel.refreshFiles()
+        viewModel.refreshFiles(userInitiated = false)
 
         binding?.swipeRefreshLayout?.let {
             it.setOnRefreshListener {
-                viewModel.refreshFiles()
+                viewModel.refreshFiles(userInitiated = true)
                 it.isRefreshing = false
             }
         }
@@ -215,7 +217,7 @@ class CloudFilesFragment : BaseFragment(), Toolbar.OnMenuItemClickListener {
                 }
             }
 
-            override fun multiSelectSelectAllUp(episode: Playable) {
+            override fun multiSelectSelectAllUp(episode: BaseEpisode) {
                 val episodes = viewModel.cloudFilesList.value
                 if (episodes != null) {
                     val startIndex = episodes.indexOf(episode)
@@ -228,7 +230,7 @@ class CloudFilesFragment : BaseFragment(), Toolbar.OnMenuItemClickListener {
                 }
             }
 
-            override fun multiSelectSelectAllDown(episode: Playable) {
+            override fun multiSelectSelectAllDown(episode: BaseEpisode) {
                 val episodes = viewModel.cloudFilesList.value
                 if (episodes != null) {
                     val startIndex = episodes.indexOf(episode)
@@ -320,7 +322,7 @@ class CloudFilesFragment : BaseFragment(), Toolbar.OnMenuItemClickListener {
         dialog.show(parentFragmentManager, "sort_options")
     }
 
-    private fun episodeDeleteSwiped(episode: Playable, index: Int) {
+    private fun episodeDeleteSwiped(episode: BaseEpisode, index: Int) {
         val userEpisode = episode as? UserEpisode ?: return
         val deleteState = viewModel.getDeleteStateOnSwipeDelete(userEpisode)
         val confirmationDialog = CloudDeleteHelper.getDeleteDialog(userEpisode, deleteState, viewModel::deleteEpisode, resources)
@@ -334,7 +336,7 @@ class CloudFilesFragment : BaseFragment(), Toolbar.OnMenuItemClickListener {
         confirmationDialog.show(parentFragmentManager, "delete_confirm")
     }
 
-    private fun episodeSwipedRightItem1(episode: Playable, index: Int) {
+    private fun episodeSwipedRightItem1(episode: BaseEpisode, index: Int) {
         when (settings.getUpNextSwipeAction()) {
             Settings.UpNextAction.PLAY_NEXT -> viewModel.episodeSwipeUpNext(episode)
             Settings.UpNextAction.PLAY_LAST -> viewModel.episodeSwipeUpLast(episode)
@@ -342,7 +344,7 @@ class CloudFilesFragment : BaseFragment(), Toolbar.OnMenuItemClickListener {
         adapter.notifyItemChanged(index)
     }
 
-    private fun episodeSwipedRightItem2(episode: Playable, index: Int) {
+    private fun episodeSwipedRightItem2(episode: BaseEpisode, index: Int) {
         when (settings.getUpNextSwipeAction()) {
             Settings.UpNextAction.PLAY_NEXT -> viewModel.episodeSwipeUpLast(episode)
             Settings.UpNextAction.PLAY_LAST -> viewModel.episodeSwipeUpNext(episode)

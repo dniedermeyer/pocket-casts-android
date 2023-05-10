@@ -1,8 +1,8 @@
 package au.com.shiftyjelly.pocketcasts.profile.cloud
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.toLiveData
 import androidx.lifecycle.viewModelScope
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsSource
@@ -40,17 +40,17 @@ class CloudBottomSheetViewModel @Inject constructor(
     userManager: UserManager
 ) : ViewModel() {
     lateinit var state: LiveData<BottomSheetState>
-    var signInState = LiveDataReactiveStreams.fromPublisher(userManager.getSignInState())
+    var signInState = userManager.getSignInState().toLiveData()
     private val source = AnalyticsSource.FILES
 
     fun setup(uuid: String) {
         val isPlayingFlowable = playbackManager.playbackStateRelay.filter { it.episodeUuid == uuid }.map { it.isPlaying }.startWith(false).toFlowable(BackpressureStrategy.LATEST)
         val inUpNextFlowable = playbackManager.upNextQueue.changesObservable.containsUuid(uuid).toFlowable(BackpressureStrategy.LATEST)
-        val episodeFlowable = userEpisodeManager.observeEpisode(uuid)
+        val episodeFlowable = userEpisodeManager.observeEpisodeRx(uuid)
         val combined = Flowables.combineLatest(episodeFlowable, inUpNextFlowable, isPlayingFlowable) { episode, inUpNext, isPlaying ->
             BottomSheetState(episode, inUpNext, isPlaying)
         }
-        state = LiveDataReactiveStreams.fromPublisher(combined)
+        state = combined.toLiveData()
     }
 
     fun getDeleteStateOnDeleteClick(episode: UserEpisode): DeleteState {
@@ -97,14 +97,14 @@ class CloudBottomSheetViewModel @Inject constructor(
     }
 
     fun removeFromUpNext(episode: UserEpisode) {
-        playbackManager.removeEpisode(episode)
+        playbackManager.removeEpisode(episodeToRemove = episode, source = source)
         trackOptionTapped(UP_NEXT_DELETE)
     }
 
     @OptIn(DelicateCoroutinesApi::class)
     fun playNext(episode: UserEpisode) {
         GlobalScope.launch(Dispatchers.Default) {
-            playbackManager.playNext(episode)
+            playbackManager.playNext(episode = episode, source = source)
             trackOptionTapped(UP_NEXT_ADD_TOP)
         }
     }
@@ -112,7 +112,7 @@ class CloudBottomSheetViewModel @Inject constructor(
     @OptIn(DelicateCoroutinesApi::class)
     fun playLast(episode: UserEpisode) {
         GlobalScope.launch(Dispatchers.Default) {
-            playbackManager.playLast(episode)
+            playbackManager.playLast(episode = episode, source = source)
             trackOptionTapped(UP_NEXT_ADD_BOTTOM)
         }
     }
@@ -120,6 +120,7 @@ class CloudBottomSheetViewModel @Inject constructor(
     fun markAsPlayed(episode: UserEpisode) {
         viewModelScope.launch(Dispatchers.Default) {
             episodeManager.markAsPlayed(episode, playbackManager, podcastManager)
+            episodeAnalytics.trackEvent(AnalyticsEvent.EPISODE_MARKED_AS_PLAYED, source, episode.uuid)
             trackOptionTapped(MARK_PLAYED)
         }
     }
@@ -127,6 +128,7 @@ class CloudBottomSheetViewModel @Inject constructor(
     fun markAsUnplayed(episode: UserEpisode) {
         viewModelScope.launch(Dispatchers.Default) {
             episodeManager.markAsNotPlayed(episode)
+            episodeAnalytics.trackEvent(AnalyticsEvent.EPISODE_MARKED_AS_UNPLAYED, source, episode.uuid)
             trackOptionTapped(MARK_UNPLAYED)
         }
     }

@@ -1,12 +1,12 @@
 package au.com.shiftyjelly.pocketcasts.profile.cloud
 
-import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.toLiveData
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsSource
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsTrackerWrapper
 import au.com.shiftyjelly.pocketcasts.analytics.EpisodeAnalytics
-import au.com.shiftyjelly.pocketcasts.models.entity.Playable
+import au.com.shiftyjelly.pocketcasts.models.entity.BaseEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.UserEpisode
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
@@ -39,35 +39,47 @@ class CloudFilesViewModel @Inject constructor(
 
     val sortOrderRelay = BehaviorRelay.create<Settings.CloudSortOrder>().apply { accept(settings.getCloudSortOrder()) }
     val sortedCloudFiles = sortOrderRelay.toFlowable(BackpressureStrategy.LATEST).switchMap { userEpisodeManager.observeUserEpisodesSorted(it) }
-    val cloudFilesList = LiveDataReactiveStreams.fromPublisher(sortedCloudFiles)
-    val accountUsage = LiveDataReactiveStreams.fromPublisher(userEpisodeManager.observeAccountUsage())
-    val signInState = LiveDataReactiveStreams.fromPublisher(userManager.getSignInState())
+    val cloudFilesList = sortedCloudFiles.toLiveData()
+    val accountUsage = userEpisodeManager.observeAccountUsage().toLiveData()
+    val signInState = userManager.getSignInState().toLiveData()
 
-    fun refreshFiles() {
+    fun refreshFiles(userInitiated: Boolean) {
+        if (userInitiated) {
+            analyticsTracker.track(
+                AnalyticsEvent.PULLED_TO_REFRESH,
+                mapOf(
+                    "source" to when (cloudFilesList.value?.isEmpty()) {
+                        true -> "no_files"
+                        false -> "files"
+                        else -> "unknown"
+                    }
+                )
+            )
+        }
         userEpisodeManager.syncFilesInBackground(playbackManager)
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun episodeSwipeUpNext(episode: Playable) {
+    fun episodeSwipeUpNext(episode: BaseEpisode) {
         GlobalScope.launch(Dispatchers.Default) {
             if (playbackManager.upNextQueue.contains(episode.uuid)) {
-                playbackManager.removeEpisode(episode)
+                playbackManager.removeEpisode(episodeToRemove = episode, source = AnalyticsSource.FILES)
                 trackSwipeAction(SwipeAction.UP_NEXT_REMOVE)
             } else {
-                playbackManager.playNext(episode)
+                playbackManager.playNext(episode = episode, source = AnalyticsSource.FILES)
                 trackSwipeAction(SwipeAction.UP_NEXT_ADD_TOP)
             }
         }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun episodeSwipeUpLast(episode: Playable) {
+    fun episodeSwipeUpLast(episode: BaseEpisode) {
         GlobalScope.launch(Dispatchers.Default) {
             if (playbackManager.upNextQueue.contains(episode.uuid)) {
-                playbackManager.removeEpisode(episode)
+                playbackManager.removeEpisode(episodeToRemove = episode, source = AnalyticsSource.FILES)
                 trackSwipeAction(SwipeAction.UP_NEXT_REMOVE)
             } else {
-                playbackManager.playLast(episode)
+                playbackManager.playLast(episode = episode, source = AnalyticsSource.FILES)
                 trackSwipeAction(SwipeAction.UP_NEXT_ADD_BOTTOM)
             }
         }

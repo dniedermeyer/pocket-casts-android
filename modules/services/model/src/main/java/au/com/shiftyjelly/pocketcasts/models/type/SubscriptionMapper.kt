@@ -1,5 +1,10 @@
 package au.com.shiftyjelly.pocketcasts.models.type
 
+import au.com.shiftyjelly.pocketcasts.models.type.Subscription.Companion.PATRON_MONTHLY_PRODUCT_ID
+import au.com.shiftyjelly.pocketcasts.models.type.Subscription.Companion.PATRON_YEARLY_PRODUCT_ID
+import au.com.shiftyjelly.pocketcasts.models.type.Subscription.Companion.PLUS_MONTHLY_PRODUCT_ID
+import au.com.shiftyjelly.pocketcasts.models.type.Subscription.Companion.PLUS_YEARLY_PRODUCT_ID
+import au.com.shiftyjelly.pocketcasts.models.type.Subscription.SubscriptionTier
 import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import com.android.billingclient.api.ProductDetails
 import java.time.Period
@@ -32,12 +37,14 @@ object SubscriptionMapper {
                 val trialPricingPhase = relevantSubscriptionOfferDetails.trialSubscriptionPricingPhase
                 if (trialPricingPhase == null) {
                     Subscription.Simple(
+                        tier = mapProductIdToTier(productDetails.productId),
                         recurringPricingPhase = recurringPricingPhase,
                         productDetails = productDetails,
                         offerToken = relevantSubscriptionOfferDetails.offerToken
                     )
                 } else {
                     Subscription.WithTrial(
+                        tier = mapProductIdToTier(productDetails.productId),
                         recurringPricingPhase = recurringPricingPhase,
                         trialPricingPhase = trialPricingPhase,
                         productDetails = productDetails,
@@ -114,4 +121,10 @@ object SubscriptionMapper {
             )
             null
         }
+
+    fun mapProductIdToTier(productId: String) = when (productId) {
+        in listOf(PLUS_MONTHLY_PRODUCT_ID, PLUS_YEARLY_PRODUCT_ID) -> SubscriptionTier.PLUS
+        in listOf(PATRON_MONTHLY_PRODUCT_ID, PATRON_YEARLY_PRODUCT_ID) -> SubscriptionTier.PATRON
+        else -> SubscriptionTier.UNKNOWN
+    }
 }

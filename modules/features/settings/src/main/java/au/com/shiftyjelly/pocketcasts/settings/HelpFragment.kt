@@ -17,11 +17,13 @@ import android.widget.Button
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import au.com.shiftyjelly.pocketcasts.analytics.FirebaseAnalyticsTracker
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.support.Support
 import au.com.shiftyjelly.pocketcasts.settings.status.StatusFragment
+import au.com.shiftyjelly.pocketcasts.settings.viewmodel.HelpViewModel
 import au.com.shiftyjelly.pocketcasts.ui.helper.FragmentHostListener
 import au.com.shiftyjelly.pocketcasts.ui.theme.Theme
 import au.com.shiftyjelly.pocketcasts.views.extensions.findToolbar
@@ -43,6 +45,8 @@ class HelpFragment : Fragment(), HasBackstack, Toolbar.OnMenuItemClickListener {
     @Inject lateinit var settings: Settings
     @Inject lateinit var theme: Theme
     @Inject lateinit var support: Support
+
+    val viewModel by viewModels<HelpViewModel>()
 
     private var webView: WebView? = null
     private var loadedUrl: String? = null
@@ -67,10 +71,10 @@ class HelpFragment : Fragment(), HasBackstack, Toolbar.OnMenuItemClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         savedInstanceState?.let {
             loadedUrl = savedInstanceState.getString("url")
         }
+        viewModel.onShown()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -99,15 +103,23 @@ class HelpFragment : Fragment(), HasBackstack, Toolbar.OnMenuItemClickListener {
         return view
     }
 
-    override fun onMenuItemClick(item: MenuItem): Boolean {
-        return if (item.itemId == R.id.menu_status_page) {
-            val fragment = StatusFragment()
-            (activity as? FragmentHostListener)?.addFragment(fragment)
-            true
-        } else {
-            false
+    override fun onMenuItemClick(item: MenuItem): Boolean =
+        when (item.itemId) {
+
+            R.id.menu_logs -> {
+                val fragment = LogsFragment()
+                (activity as? FragmentHostListener)?.addFragment(fragment)
+                true
+            }
+
+            R.id.menu_status_page -> {
+                val fragment = StatusFragment()
+                (activity as? FragmentHostListener)?.addFragment(fragment)
+                true
+            }
+
+            else -> false
         }
-    }
 
     override fun onBackPressed(): Boolean {
         webView?.let {
@@ -117,6 +129,11 @@ class HelpFragment : Fragment(), HasBackstack, Toolbar.OnMenuItemClickListener {
             }
         }
         return false
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.onFragmentPause(activity?.isChangingConfigurations)
     }
 
     override fun getBackstackCount(): Int {
@@ -179,7 +196,12 @@ class HelpFragment : Fragment(), HasBackstack, Toolbar.OnMenuItemClickListener {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val intent = support.sendEmail(subject = "Android feedback.", intro = "It's a great app, but it really needs...", context)
+                val intent = support.shareLogs(
+                    subject = "Android feedback.",
+                    intro = "It's a great app, but it really needs...",
+                    emailSupport = true,
+                    context = context,
+                )
                 context.startActivity(intent)
             } catch (e: ActivityNotFoundException) {
                 UiUtil.displayDialogNoEmailApp(context)
@@ -194,7 +216,12 @@ class HelpFragment : Fragment(), HasBackstack, Toolbar.OnMenuItemClickListener {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val intent = support.sendEmail(subject = "Android support.", intro = "Hi there, just needed help with something...", context)
+                val intent = support.shareLogs(
+                    subject = "Android support.",
+                    intro = "Hi there, just needed help with something...",
+                    emailSupport = true,
+                    context = context,
+                )
                 context.startActivity(intent)
             } catch (e: ActivityNotFoundException) {
                 UiUtil.displayDialogNoEmailApp(context)

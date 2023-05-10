@@ -1,6 +1,75 @@
-7.32
+7.39
 -----
 
+7.38
+-----
+*   Updates:
+    *   Added Advanced Settings section for experimental settings
+        ([#885](https://github.com/Automattic/pocket-casts-android/pull/885/)).
+    *   Added setting to disable sync on metered networks
+        ([#885](https://github.com/Automattic/pocket-casts-android/pull/885/)).
+    *   Added ability to view and share app logs from the "Help & feedback" screen
+        ([911](https://github.com/Automattic/pocket-casts-android/pull/911)).
+*   Bug Fixes:
+    *   Fixed accessibility content desctiption for episode list
+        ([#890](https://github.com/Automattic/pocket-casts-android/issues/890)).
+    *   Improved the validation of the Automotive skip forward and back time settings
+        ([#890](https://github.com/Automattic/pocket-casts-android/pull/892)).
+    *   Fixed the show notes' timestamps not getting converted to a link if it contained another link 
+        ([#814](https://github.com/Automattic/pocket-casts-android/issues/814)).
+    *   Prevented crash when signing out of Android Automotive and clearing data while playback is in progress
+        ([#919](https://github.com/Automattic/pocket-casts-android/pull/919)).    
+ 
+7.37.1
+-----
+* Bug Fixes:
+    *    Fixed an issue that could cause users to be repeatedly logged out of the app.
+         ([#930](https://github.com/Automattic/pocket-casts-android/pull/930)).
+
+7.37
+-----
+*   New Features:
+    *   Added capability to sign into Pocket Casts using Google account
+        ([#878](https://github.com/Automattic/pocket-casts-android/pull/878)).
+
+7.35
+-----
+*   Updates
+    *   The Automotive skip forward and backward time settings were improved
+        ([#817](https://github.com/Automattic/pocket-casts-android/pull/817)).
+    *   Fixed Automotive Up Next podcast images not loading
+        ([#819](https://github.com/Automattic/pocket-casts-android/pull/819)).
+    *   Fixed missing seek bar in the notification drawer and Android Automotive
+        ([#822](https://github.com/Automattic/pocket-casts-android/pull/822)).
+    *   Added option to clear data when signing out of Android Automotive
+        ([828](https://github.com/Automattic/pocket-casts-android/pull/828)).
+    *   Podcast carousel on Discover screen now scrolls automatically
+        ([818](https://github.com/Automattic/pocket-casts-android/pull/818)).
+
+7.34
+-----
+*   Updates
+    *   Improved the Automotive account page styles
+        ([#798](https://github.com/Automattic/pocket-casts-android/pull/798)).
+    *   When Automotive doesn't have a browser, the URL and a QR code are shown instead.
+        ([#800](https://github.com/Automattic/pocket-casts-android/pull/800)).
+
+7.33
+-----
+*   New Features:
+    *    Added search history 
+         ([#784](https://github.com/Automattic/pocket-casts-android/pull/784)).
+*   Bug Fixes:
+    *    App no longer crashes when the device browser has been disabled
+         ([#762](https://github.com/Automattic/pocket-casts-android/issues/762)).    
+    *    Improve discovery of chromecast devices
+         ([#780](https://github.com/Automattic/pocket-casts-android/issues/780)).
+
+7.32
+-----
+*   Bug Fixes:
+    *    Ask notifications permission for newly-installed apps on Android 13
+         ([#723](https://github.com/Automattic/pocket-casts-android/issues/723)).
 
 7.31
 -----
@@ -341,4 +410,3 @@
         ([#3148](https://github.com/shiftyjelly/pocketcasts-android/issues/3148)).
     *   Fix create account next button not working when using 1Password
         ([#3167](https://github.com/shiftyjelly/pocketcasts-android/issues/3167)).
-

@@ -1,8 +1,8 @@
 package au.com.shiftyjelly.pocketcasts.profile.cloud
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.toLiveData
 import au.com.shiftyjelly.pocketcasts.models.entity.UserEpisode
 import au.com.shiftyjelly.pocketcasts.models.to.SignInState
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
@@ -20,10 +20,7 @@ class AddFileViewModel @Inject constructor(
     val userEpisodeManager: UserEpisodeManager
 ) : ViewModel() {
 
-    val isSignedIn: Boolean
-        get() = signInState.value?.isSignedIn ?: false
-
-    val signInState: LiveData<SignInState> = LiveDataReactiveStreams.fromPublisher(userManager.getSignInState())
+    val signInState: LiveData<SignInState> = userManager.getSignInState().toLiveData()
 
     suspend fun updateImageOnServer(userEpisode: UserEpisode, imageFile: File) = withContext(Dispatchers.IO) {
         userEpisodeManager.uploadImageToServer(userEpisode, imageFile).await()

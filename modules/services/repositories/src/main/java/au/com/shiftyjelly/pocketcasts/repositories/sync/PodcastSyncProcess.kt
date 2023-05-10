@@ -3,10 +3,10 @@ package au.com.shiftyjelly.pocketcasts.repositories.sync
 import android.content.Context
 import android.os.Build
 import android.os.SystemClock
-import au.com.shiftyjelly.pocketcasts.models.entity.Episode
 import au.com.shiftyjelly.pocketcasts.models.entity.Folder
 import au.com.shiftyjelly.pocketcasts.models.entity.Playlist
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.models.to.StatsBundle
 import au.com.shiftyjelly.pocketcasts.models.to.SubscriptionStatus
 import au.com.shiftyjelly.pocketcasts.models.type.EpisodePlayingStatus
@@ -24,10 +24,8 @@ import au.com.shiftyjelly.pocketcasts.repositories.user.StatsManager
 import au.com.shiftyjelly.pocketcasts.servers.podcast.PodcastCacheServerManagerImpl
 import au.com.shiftyjelly.pocketcasts.servers.sync.FolderResponse
 import au.com.shiftyjelly.pocketcasts.servers.sync.PodcastResponse
-import au.com.shiftyjelly.pocketcasts.servers.sync.SyncServerManager
 import au.com.shiftyjelly.pocketcasts.servers.sync.SyncSettingsTask
-import au.com.shiftyjelly.pocketcasts.servers.sync.old.SyncOldServerManager
-import au.com.shiftyjelly.pocketcasts.servers.sync.old.SyncUpdateResponse
+import au.com.shiftyjelly.pocketcasts.servers.sync.update.SyncUpdateResponse
 import au.com.shiftyjelly.pocketcasts.utils.SentryHelper
 import au.com.shiftyjelly.pocketcasts.utils.extensions.parseIsoDate
 import au.com.shiftyjelly.pocketcasts.utils.extensions.toIsoString
@@ -57,18 +55,17 @@ class PodcastSyncProcess(
     var statsManager: StatsManager,
     var fileStorage: FileStorage,
     var playbackManager: PlaybackManager,
-    var syncOldServerManager: SyncOldServerManager,
-    var syncServerManager: SyncServerManager,
     var podcastCacheServerManager: PodcastCacheServerManagerImpl,
     var userEpisodeManager: UserEpisodeManager,
     var subscriptionManager: SubscriptionManager,
-    var folderManager: FolderManager
+    var folderManager: FolderManager,
+    var syncManager: SyncManager
 ) : CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Default
 
     fun run(): Completable {
-        if (!settings.isLoggedIn()) {
+        if (!syncManager.isLoggedIn()) {
             playlistManager.deleteSynced()
 
             Timber.i("SyncProcess: User not logged in")
@@ -107,7 +104,7 @@ class PodcastSyncProcess(
 
     private fun performIncrementalSync(lastModified: String): Completable {
         val uploadData = uploadChanges()
-        val uploadObservable = syncOldServerManager.syncUpdate(uploadData.first, lastModified)
+        val uploadObservable = syncManager.syncUpdate(uploadData.first, lastModified)
         val downloadObservable = uploadObservable.flatMap {
             processServerResponse(it, uploadData.second)
         }.ignoreElement()
@@ -116,7 +113,7 @@ class PodcastSyncProcess(
 
     private fun performFullSync(): Completable {
         // grab the last sync date before we begin
-        return syncServerManager.getLastSyncAt()
+        return syncManager.getLastSyncAt()
             .flatMapCompletable { lastSyncAt ->
                 cacheStats()
                     .andThen(downloadAndImportHomeFolder())
@@ -130,7 +127,7 @@ class PodcastSyncProcess(
         val localPodcasts = podcastManager.findSubscribedRx()
         val localFolderUuids = folderManager.findFoldersSingle().map { it.map { folder -> folder.uuid } }
         // get all the users podcast uuids from the server
-        val serverHomeFolder = syncServerManager.getHomeFolder()
+        val serverHomeFolder = syncManager.getHomeFolder()
         return Singles.zip(serverHomeFolder, localPodcasts, localFolderUuids)
             .flatMapCompletable { (serverHomeFolder, localPodcasts, localFolderUuids) ->
                 importPodcastsFullSync(serverPodcasts = serverHomeFolder.podcasts ?: emptyList(), localPodcasts = localPodcasts)
@@ -200,7 +197,7 @@ class PodcastSyncProcess(
     }
 
     private fun downloadAndImportFilters(): Completable {
-        return syncServerManager.getFilters()
+        return syncManager.getFilters()
             .flatMapCompletable { filters -> importFilters(filters) }
     }
 
@@ -235,7 +232,7 @@ class PodcastSyncProcess(
     private fun syncUpNext(): Completable {
         return Completable.fromAction {
             val startTime = SystemClock.elapsedRealtime()
-            UpNextSyncJob.run(settings, context)
+            UpNextSyncJob.run(syncManager, context)
             LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Refresh - sync up next - ${String.format("%d ms", SystemClock.elapsedRealtime() - startTime)}")
         }
     }
@@ -251,7 +248,7 @@ class PodcastSyncProcess(
     private fun syncSettings(): Completable {
         return rxCompletable {
             val startTime = SystemClock.elapsedRealtime()
-            SyncSettingsTask.run(settings, syncServerManager)
+            SyncSettingsTask.run(settings, syncManager)
             LogBuffer.i(LogBuffer.TAG_BACKGROUND_TASKS, "Refresh - sync settings - ${String.format("%d ms", SystemClock.elapsedRealtime() - startTime)}")
         }
     }
@@ -267,7 +264,7 @@ class PodcastSyncProcess(
             }
     }
 
-    private fun uploadChanges(): Pair<String, List<Episode>> {
+    private fun uploadChanges(): Pair<String, List<PodcastEpisode>> {
         val records = JSONArray()
         uploadPodcastChanges(records)
         val episodes = uploadEpisodesChanges(records)
@@ -425,7 +422,7 @@ class PodcastSyncProcess(
         }
     }
 
-    private fun uploadEpisodesChanges(records: JSONArray): List<Episode> {
+    private fun uploadEpisodesChanges(records: JSONArray): List<PodcastEpisode> {
         try {
             val episodes = episodeManager.findEpisodesToSync()
             episodes.forEach { episode ->
@@ -439,7 +436,7 @@ class PodcastSyncProcess(
         }
     }
 
-    private fun uploadEpisodeChanges(episode: Episode, records: JSONArray) {
+    private fun uploadEpisodeChanges(episode: PodcastEpisode, records: JSONArray) {
         val fields = JSONObject()
 
         try {
@@ -487,7 +484,7 @@ class PodcastSyncProcess(
         }
     }
 
-    private fun processServerResponse(response: SyncUpdateResponse, episodes: List<Episode>): Single<String> {
+    private fun processServerResponse(response: SyncUpdateResponse, episodes: List<PodcastEpisode>): Single<String> {
         if (response.lastModified == null) {
             return Single.error(Exception("Server response doesn't return a last modified"))
         }
@@ -510,7 +507,7 @@ class PodcastSyncProcess(
         }
     }
 
-    private fun markAllLocalItemsSynced(episodes: List<Episode>): Completable {
+    private fun markAllLocalItemsSynced(episodes: List<PodcastEpisode>): Completable {
         return Completable.fromAction {
             podcastManager.markAllPodcastsSynced()
             episodeManager.markAllEpisodesSynced(episodes)
@@ -693,7 +690,7 @@ class PodcastSyncProcess(
         return Maybe.just(podcast)
     }
 
-    private fun importEpisode(episodeSync: SyncUpdateResponse.EpisodeSync): Maybe<Episode> {
+    private fun importEpisode(episodeSync: SyncUpdateResponse.EpisodeSync): Maybe<PodcastEpisode> {
         val uuid = episodeSync.uuid ?: return Maybe.empty()
 
         // check if the episode already exists
@@ -705,7 +702,7 @@ class PodcastSyncProcess(
         }
     }
 
-    private fun importExistingEpisode(sync: SyncUpdateResponse.EpisodeSync, episode: Episode): Single<Episode> {
+    private fun importExistingEpisode(sync: SyncUpdateResponse.EpisodeSync, episode: PodcastEpisode): Single<PodcastEpisode> {
         return Single.fromCallable {
             val playingEpisodeUuid = playbackManager.getCurrentEpisode()?.uuid
             val episodeInPlayer = playingEpisodeUuid != null && episode.uuid == playingEpisodeUuid

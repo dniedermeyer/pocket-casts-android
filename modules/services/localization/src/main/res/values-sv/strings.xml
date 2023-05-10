@@ -1,11 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Translation-Revision-Date: 2023-01-17 10:54:03+0000
+Translation-Revision-Date: 2023-04-25 12:54:20+0000
 Plural-Forms: nplurals=2; plural=n != 1;
 Generator: GlotPress/2.4.0-alpha
 Language: sv_SE
 -->
 <resources>
+    <string name="episode_downloading">Laddas ner</string>
+    <string name="episode_in_up_next">I Nästa</string>
+    <string name="onboarding_plus_feature_gratitude_title">Den eviga tacksamheten hos alla här på Pocket Casts</string>
+    <string name="onboarding_plus_features_description">Ta din podcastupplevelse till nästa nivå med exklusiv tillgång till funktioner och anpassningsalternativ.</string>
+    <string name="onboarding_patron_feature_special_icons_title">Särskilda Pocket Casts-appikoner</string>
+    <string name="onboarding_patron_feature_profile_badge_title">Supporterprofilmärke</string>
+    <string name="onboarding_patron_feature_cloud_storage_title">50 GB molnlagring</string>
+    <string name="onboarding_patron_feature_everything_in_plus_title">Allt i Plus</string>
+    <string name="onboarding_patron_features_description">Bli en Pocket Casts Patron och hjälp oss att fortsätta att leverera den bästa möjliga podcastupplevelsen.</string>
+    <string name="onboarding_patron_features_title">Tror du på det vi gör och vill visa ditt stöd?</string>
+    <string name="slash_month">/månad</string>
+    <string name="slash_year">/år</string>
+    <string name="server_user_delete_account_with_sub_failed">Ditt konto har en aktiv Pocket Casts Plus-prenumeration. Avbryt denna prenumeration innan du tar bort ditt konto.</string>
+    <string name="server_user_change_email_success">Din e-postadress har ändrats.</string>
+    <string name="server_user_email_verification_failed">E-postverifieringen misslyckades.</string>
+    <string name="server_user_email_success">E-postmeddelandet har skickats.</string>
+    <string name="server_user_email_failed">Det gick inte att skicka e-postmeddelandet.</string>
+    <string name="server_promo_winback_no_plus">Det gick inte att lösa in den här kampanjen, eftersom du för närvarande inte är Plus-prenumerant.</string>
+    <string name="server_login_password_change_failed">Det gick inte att ändra lösenordet</string>
+    <string name="server_login_password_change_success">Lösenordet har ändrats</string>
+    <string name="add_to_up_next_question">Lägg till i Nästa?</string>
+    <string name="wear_show_password">Visa lösenord</string>
+    <string name="wear_hide_password">Dölj lösenord</string>
+    <string name="settings_metered_data_warning">Varning för rörlig kostnad för datatrafik</string>
+    <string name="stream_warning_summary_short">Streaming kommer använda data. Fortsätta?</string>
+    <string name="removed">Borttaget</string>
+    <string name="mark_unplayed">Markera som ej uppspelat</string>
+    <string name="log_out">Logga ut</string>
+    <string name="account">Konto</string>
+    <string name="profile_just_sign_out">Bara logga ut</string>
+    <string name="profile_clear_data_would_you_also_like_question">Vill du även rensa alla data från appen?</string>
+    <string name="profile_clear_data_question">Rensa data?</string>
+    <string name="profile_clear_data">Rensa data</string>
+    <string name="discover_sponsored">Sponsrad</string>
+    <string name="podcasts_all">Alla podcasts</string>
+    <string name="search_results_all_podcasts">Alla podcasts</string>
+    <string name="search_results_all_episodes">Alla avsnitt</string>
+    <string name="search_history_row_type_episode_subtitle">Avsnitt \u2022 %s \u2022 %s</string>
+    <string name="search_show_all">Visa alla</string>
+    <string name="podcast">Podcast</string>
+    <string name="search_history_row_type_podcast_subtitle">Podcast \u2022 %s</string>
+    <string name="search_history_row_type_folder_subtitle">Mapp \u2022 %s</string>
+    <string name="search_history_recent_searches">Senaste sökningar</string>
+    <string name="search_history_clear_all_confirmation_message">Är du säker på att du vill rensa all din sökhistorik?</string>
+    <string name="search_history_clear_all_confirm_button_title">Rensa sökhistorik</string>
+    <string name="search_podcasts_or_add_url">Sök efter podcasts eller lägg till RSS-URL</string>
+    <string name="error_opening_links_activity_not_found">Det verkar som att du inte har någon app som kan visa detta innehåll.</string>
+    <string name="notifications_blocked_warning">Notiser har blockerats. Du kan uppdatera behörigheterna via Inställningar.</string>
+    <string name="settings_media_actions_show_subtitle">Visa anpassade mediaåtgärder i mediaaviseringar för Android 13 och Android Auto.</string>
+    <string name="settings_media_actions_show_title">Visa anpassade mediaåtgärder</string>
+    <string name="settings_media_actions_customise">Anpassa mediaåtgärder</string>
+    <string name="settings_media_actions_prioritize_subtitle">Dina vanligaste åtgärder kommer att vara tillgängliga.</string>
+    <string name="settings_media_actions_prioritize_title">Prioritera dina anpassade mediaåtgärder</string>
+    <string name="plus_take_your_podcasting_to_next_level">Ta din podcastupplevelse till nästa nivå med exklusiv tillgång till funktioner och anpassningsalternativ.</string>
     <string name="onboarding_recommendations_more">Mer %s</string>
     <string name="filter_id_or_title">Filter-ID eller -titel</string>
     <string name="filter_title">Filtertitel</string>
@@ -57,9 +111,6 @@ Language: sv_SE
     <string name="profile_cancel_confirm_sub_expiry_date_fallback">ditt utgångsdatum</string>
     <string name="profile_cancel_confirm_sub_expiry">Din nuvarande prenumeration förblir aktiv till %1$s.</string>
     <string name="profile_cancel_confirm_subtitle">Detta kommer att ändra ditt paket till ett gratiskonto.</string>
-    <string name="settings_your_top_actions_will_be_available_in_your_notif_and_android_auto_player">Dina favoritåtgärder kommer att vara tillgängliga i din Android 13-avisering och Android Auto-spelare.</string>
-    <string name="settings_rearrange_media_actions">Arrangera om mediaåtgärder</string>
-    <string name="settings_prioritize_your_notification_actions">Prioritera dina aviseringsåtgärder</string>
     <string name="settings_other_media_actions">Övriga mediaåtgärder</string>
     <string name="settings_customize_buttons_displayed_in_android_13_notification_and_android_auto">Anpassa knapparna som visas i Android 13-uppspelningsaviseringar och Android Auto.</string>
     <string name="podcast_not_subscribed">Prenumererar inte</string>
@@ -99,8 +150,6 @@ Language: sv_SE
     <string name="end_of_year_stories_failed">Det gick inte att ladda dina årsslutsberättelser. Kontrollera din anslutning.</string>
     <string name="onboarding_plus_feature_themes_icons_text">Välj dina egna färger. Exklusiva ikoner och teman för Plus-medlemmar.</string>
     <string name="onboarding_plus_feature_themes_icons_title">Teman och ikoner</string>
-    <string name="onboarding_plus_feature_hide_ads_text">Annonsfri upptäckt som ger dig mer av det du gillar och mindre av det du inte gillar.</string>
-    <string name="onboarding_plus_feature_hide_ads_title">Dölj annonser</string>
     <string name="onboarding_plus_feature_cloud_storage_text">Ladda upp dina filer till molnlagringen och ha dem tillgängliga överallt.</string>
     <string name="onboarding_plus_feature_cloud_storage_title">10 GB molnlagring</string>
     <string name="onboarding_plus_feature_folders_text">Organisera dina podcasts i mappar och håll dem synkroniserade på alla dina enheter.</string>
@@ -109,7 +158,7 @@ Language: sv_SE
     <string name="onboarding_plus_feature_desktop_apps_title">Dator-appar</string>
     <string name="onboarding_upgrade_unlock_all_features">Lås upp alla funktioner</string>
     <string name="onboarding_upgrade_exclusive_features_and_options">Få tillgång till exklusiva funktioner och anpassningsalternativ</string>
-    <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Allt du älskar med Pocket Casts och mer därtill</string>
+    <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Allt du älskar med Pocket Casts och mer därtill</string>
     <string name="onboarding_recommendations_import">Importera</string>
     <string name="onboarding_recommendations_make_pocket_casts_yours">Gör Pocket Casts till ditt genom att välja dina favoritpodcasts eller importera dem från en annan podcastspelare. Du kan alltid göra detta senare.</string>
     <string name="onboarding_recommendations_find_favorite_podcasts">Hitta dina favoritpodcasts</string>
@@ -123,6 +172,7 @@ Language: sv_SE
     <string name="onboarding_discover_your_next_favorite_podcast">Upptäck din nästa favoritpodcast</string>
     <string name="onboarding_continue_with_google">Fortsätt med Google</string>
     <string name="onboarding_welcome_back">Välkommen tillbaka</string>
+    <string name="log_in">Logga in</string>
     <string name="end_of_year_create_account_to_see">Spara dina podcasts i molnet, få din årsslutsöversikt och synkronisera ditt lyssningsförlopp med andra enheter.</string>
     <string name="end_of_year_story_top_categories_share_text">Mina mest lyssnade podcastkategorier</string>
     <string name="end_of_year_story_top_categories">Dina favoritkategorier</string>
@@ -628,7 +678,7 @@ Language: sv_SE
     <string name="settings_podcast_artwork">Podcastomslag</string>
     <string name="settings_playback_resumption_summary">Om detta är aktiverat kommer Pocket Casts att hoppa bakåt lite i avsnitt där du återupptar ditt lyssnande, så att du kan fortsätta utan att missa något.</string>
     <string name="settings_playback_resumption">Intelligent återupptagning av uppspelning</string>
-    <string name="settings_notification_vibrate_never">Nya avsnitt</string>
+    <string name="settings_notification_vibrate_never">Aldrig</string>
     <string name="settings_notification_vibrate_in_silent">Endast i tyst läge</string>
     <string name="settings_notification_vibrate_new_episodes">Nya avsnitt</string>
     <string name="settings_notification_vibrate">Vibrera när</string>

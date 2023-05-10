@@ -10,16 +10,19 @@ import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.lifecycle.LiveDataReactiveStreams
+import androidx.lifecycle.toLiveData
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
+import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsTrackerWrapper
 import au.com.shiftyjelly.pocketcasts.models.type.Subscription
 import au.com.shiftyjelly.pocketcasts.models.type.SubscriptionPricingPhase
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.subscription.ProductDetailsState
 import au.com.shiftyjelly.pocketcasts.repositories.subscription.SubscriptionManager
+import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
 import au.com.shiftyjelly.pocketcasts.settings.databinding.FragmentPlusSettingsBinding
 import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingFlow
@@ -41,10 +44,14 @@ class PlusSettingsFragment : BaseFragment() {
     @Inject lateinit var subscriptionManager: SubscriptionManager
     @Inject lateinit var settings: Settings
     @Inject lateinit var userManager: UserManager
+    @Inject lateinit var analyticsTracker: AnalyticsTrackerWrapper
+    @Inject lateinit var syncManager: SyncManager
 
     private var binding: FragmentPlusSettingsBinding? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        analyticsTracker.track(AnalyticsEvent.SETTINGS_PLUS_SHOWN)
+
         val rootView = inflater.inflate(R.layout.fragment_plus_settings, container, false)
 
         val binding = FragmentPlusSettingsBinding.inflate(inflater, container, false)
@@ -52,54 +59,70 @@ class PlusSettingsFragment : BaseFragment() {
 
         val recyclerView = binding.recyclerView
 
-        LiveDataReactiveStreams.fromPublisher(subscriptionManager.observeProductDetails()).observe(viewLifecycleOwner) { productDetailsState ->
-            val subscriptions = when (productDetailsState) {
-                is ProductDetailsState.Error -> null
-                is ProductDetailsState.Loaded -> productDetailsState.productDetails.mapNotNull {
-                    Subscription.fromProductDetails(
-                        productDetails = it,
-                        isFreeTrialEligible = subscriptionManager.isFreeTrialEligible()
-                    )
+        subscriptionManager.observeProductDetails()
+            .toLiveData()
+            .observe(viewLifecycleOwner) { productDetailsState ->
+                val subscriptions = when (productDetailsState) {
+                    is ProductDetailsState.Error -> null
+                    is ProductDetailsState.Loaded -> productDetailsState.productDetails.mapNotNull {
+                        Subscription.fromProductDetails(
+                            productDetails = it,
+                            isFreeTrialEligible = subscriptionManager.isFreeTrialEligible()
+                        )
+                    }
                 }
+
+                val headerText = PlusSection.TextBlock(LR.string.plus_description_title, LR.string.plus_description_body)
+                val feature1 = PlusSection.Feature(R.drawable.ic_desktop_apps_old, LR.string.plus_desktop_apps, LR.string.plus_desktop_apps_body)
+                val feature2 = PlusSection.Feature(R.drawable.ic_cloud_storage_old, LR.string.plus_cloud_storage, LR.string.plus_cloud_storage_body)
+                val feature3 = PlusSection.Feature(R.drawable.ic_themes_icons, LR.string.plus_themes_icons, LR.string.plus_themes_icons_body)
+                val feature4 = PlusSection.Feature(R.drawable.plus_folder, LR.string.plus_folder, LR.string.plus_folder_body)
+                val upgrade = PlusSection.UpgradeButton(
+                    subscriptions = subscriptions,
+                    onClick = {
+                        analyticsTracker.track(AnalyticsEvent.SETTINGS_PLUS_UPGRADE_BUTTON_TAPPED)
+                        val flow = if (syncManager.isLoggedIn()) {
+                            OnboardingFlow.PlusAccountUpgrade(OnboardingUpgradeSource.PLUS_DETAILS)
+                        } else {
+                            OnboardingFlow.PlusAccountUpgradeNeedsLogin
+                        }
+                        OnboardingLauncher.openOnboardingFlow(activity, flow)
+                    }
+                )
+                val link = PlusSection.LinkBlock(
+                    icon = theme.verticalPlusLogoRes(),
+                    body = LR.string.plus_description_body,
+                    linkText = LR.string.plus_learn_more_about_plus,
+                    onClick = {
+                        analyticsTracker.track(AnalyticsEvent.SETTINGS_PLUS_LEARN_MORE_TAPPED)
+                        context?.let { context ->
+                            val intent =
+                                WebViewActivity.newInstance(context, "Learn More", Settings.INFO_LEARN_MORE_URL)
+                            context.startActivity(intent)
+                        }
+                    }
+                )
+
+                val sections = listOf(
+                    PlusSection.Header,
+                    headerText,
+                    upgrade,
+                    PlusSection.Divider,
+                    feature1,
+                    feature2,
+                    feature3,
+                    feature4,
+                    PlusSection.Divider,
+                    link,
+                    upgrade
+                )
+
+                val adapter = PlusAdapter()
+                recyclerView.adapter = adapter
+                recyclerView.layoutManager = LinearLayoutManager(rootView.context, LinearLayoutManager.VERTICAL, false)
+
+                adapter.submitList(sections)
             }
-
-            val headerText = PlusSection.TextBlock(LR.string.plus_description_title, LR.string.plus_description_body)
-            val feature1 = PlusSection.Feature(R.drawable.ic_desktop_apps, LR.string.plus_desktop_apps, LR.string.plus_desktop_apps_body)
-            val feature2 = PlusSection.Feature(R.drawable.ic_cloud_storage, LR.string.plus_cloud_storage, LR.string.plus_cloud_storage_body)
-            val feature3 = PlusSection.Feature(R.drawable.ic_themes_icons, LR.string.plus_themes_icons, LR.string.plus_themes_icons_body)
-            val feature4 = PlusSection.Feature(R.drawable.plus_folder, LR.string.plus_folder, LR.string.plus_folder_body)
-            val upgrade = PlusSection.UpgradeButton(subscriptions)
-            val link = PlusSection.LinkBlock(theme.verticalPlusLogoRes(), LR.string.plus_description_body, LR.string.plus_learn_more_about_plus, Settings.INFO_LEARN_MORE_URL)
-
-            val sections = listOf(
-                PlusSection.Header,
-                headerText,
-                upgrade,
-                PlusSection.Divider,
-                feature1,
-                feature2,
-                feature3,
-                feature4,
-                PlusSection.Divider,
-                link,
-                upgrade
-            )
-
-            val onAccountUpgradeClick: (() -> Unit) = {
-                val flow = if (settings.isLoggedIn()) {
-                    OnboardingFlow.PlusAccountUpgrade(OnboardingUpgradeSource.PLUS_DETAILS)
-                } else {
-                    OnboardingFlow.PlusAccountUpgradeNeedsLogin
-                }
-                OnboardingLauncher.openOnboardingFlow(activity, flow)
-            }
-
-            val adapter = PlusAdapter(onAccountUpgradeClick)
-            recyclerView.adapter = adapter
-            recyclerView.layoutManager = LinearLayoutManager(rootView.context, LinearLayoutManager.VERTICAL, false)
-
-            adapter.submitList(sections)
-        }
 
         return binding.root
     }
@@ -109,8 +132,8 @@ class PlusSettingsFragment : BaseFragment() {
 
         binding?.toolbar?.setup(title = getString(LR.string.pocket_casts_plus), navigationIcon = BackArrow, activity = activity, theme = theme)
 
-        LiveDataReactiveStreams
-            .fromPublisher(userManager.getSignInState())
+        userManager.getSignInState()
+            .toLiveData()
             .observe(viewLifecycleOwner) { signInState ->
                 // If the user has gone through the upgraded to Plus, we no longer want
                 // to present this screen since it is asking them to sign up for Plus
@@ -123,11 +146,16 @@ class PlusSettingsFragment : BaseFragment() {
 }
 
 private sealed class PlusSection {
-    data class UpgradeButton(val subscriptions: List<Subscription>?) : PlusSection()
+    data class UpgradeButton(val subscriptions: List<Subscription>?, val onClick: () -> Unit) : PlusSection()
     data class Feature(@DrawableRes val icon: Int, @StringRes val title: Int, @StringRes val body: Int) : PlusSection()
     object Header : PlusSection()
     data class TextBlock(@StringRes val title: Int, @StringRes val body: Int) : PlusSection()
-    data class LinkBlock(@DrawableRes val icon: Int, @StringRes val body: Int, @StringRes val linkText: Int, val link: String) : PlusSection()
+    data class LinkBlock(
+        @DrawableRes val icon: Int,
+        @StringRes val body: Int,
+        @StringRes val linkText: Int,
+        val onClick: () -> Unit
+    ) : PlusSection()
     object Divider : PlusSection()
 }
 
@@ -141,7 +169,7 @@ private val SECTION_DIFF = object : DiffUtil.ItemCallback<PlusSection>() {
     }
 }
 
-private class PlusAdapter(val onAccountUpgradeClick: () -> Unit) : ListAdapter<PlusSection, RecyclerView.ViewHolder>(SECTION_DIFF) {
+private class PlusAdapter : ListAdapter<PlusSection, RecyclerView.ViewHolder>(SECTION_DIFF) {
     class FeatureViewHolder(val root: View) : RecyclerView.ViewHolder(root) {
         private val imgIcon = root.findViewById<GradientIcon>(R.id.imgIcon)
         private val lblTitle = root.findViewById<TextView>(R.id.lblTitle)
@@ -154,14 +182,12 @@ private class PlusAdapter(val onAccountUpgradeClick: () -> Unit) : ListAdapter<P
         }
     }
 
-    class UpgradeViewHolder(val root: View, val onAccountUpgradeClick: () -> Unit) : RecyclerView.ViewHolder(root) {
+    class UpgradeViewHolder(val root: View) : RecyclerView.ViewHolder(root) {
         private val lblSubtitle = root.findViewById<TextView>(R.id.lblSubtitle)
         private val btnUpgrade = root.findViewById<TextView>(R.id.btnUpgrade)
 
         fun bind(upgrade: PlusSection.UpgradeButton) {
-            btnUpgrade.setOnClickListener {
-                onAccountUpgradeClick()
-            }
+            btnUpgrade.setOnClickListener { upgrade.onClick() }
 
             upgrade.subscriptions?.let { subscriptions ->
                 val trials = subscriptions.filterIsInstance<Subscription.WithTrial>()
@@ -230,10 +256,7 @@ private class PlusAdapter(val onAccountUpgradeClick: () -> Unit) : ListAdapter<P
         fun bind(linkBlock: PlusSection.LinkBlock) {
             lblBody.setText(linkBlock.body)
             lblLink.setText(linkBlock.linkText)
-            lblLink.setOnClickListener {
-                val intent = WebViewActivity.newInstance(lblLink.context, "Learn More", linkBlock.link)
-                lblLink.context?.startActivity(intent)
-            }
+            lblLink.setOnClickListener { linkBlock.onClick() }
             imgLogo.setImageResource(linkBlock.icon)
         }
     }
@@ -255,7 +278,7 @@ private class PlusAdapter(val onAccountUpgradeClick: () -> Unit) : ListAdapter<P
         val itemView = LayoutInflater.from(parent.context).inflate(viewType, parent, false)
         return when (viewType) {
             R.layout.adapter_plus_feature_row -> FeatureViewHolder(itemView)
-            R.layout.adapter_plus_upgrade_button -> UpgradeViewHolder(itemView, onAccountUpgradeClick)
+            R.layout.adapter_plus_upgrade_button -> UpgradeViewHolder(itemView)
             R.layout.adapter_plus_header -> HeaderViewHolder(itemView)
             R.layout.adapter_plus_text_block -> TextBlockHolder(itemView)
             R.layout.adapter_plus_link_block -> LinkBlockHolder(itemView)

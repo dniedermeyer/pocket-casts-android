@@ -3,8 +3,10 @@ package au.com.shiftyjelly.pocketcasts.discover.viewmodel
 import android.content.res.Resources
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsSource
-import au.com.shiftyjelly.pocketcasts.models.entity.Episode
+import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsTrackerWrapper
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
@@ -17,8 +19,10 @@ import au.com.shiftyjelly.pocketcasts.servers.model.DiscoverPodcast
 import au.com.shiftyjelly.pocketcasts.servers.model.DiscoverRegion
 import au.com.shiftyjelly.pocketcasts.servers.model.DiscoverRow
 import au.com.shiftyjelly.pocketcasts.servers.model.NetworkLoadableList
+import au.com.shiftyjelly.pocketcasts.servers.model.SponsoredPodcast
 import au.com.shiftyjelly.pocketcasts.servers.model.transformWithRegion
 import au.com.shiftyjelly.pocketcasts.servers.server.ListRepository
+import au.com.shiftyjelly.pocketcasts.utils.SentryHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
@@ -29,6 +33,7 @@ import io.reactivex.rxkotlin.combineLatest
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
+import java.io.InvalidObjectException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -38,20 +43,32 @@ class DiscoverViewModel @Inject constructor(
     val podcastManager: PodcastManager,
     val episodeManager: EpisodeManager,
     val playbackManager: PlaybackManager,
-    val userManager: UserManager
+    val userManager: UserManager,
+    val analyticsTracker: AnalyticsTrackerWrapper,
 ) : ViewModel() {
     private val disposables = CompositeDisposable()
     private val playbackSource = AnalyticsSource.DISCOVER
     val state = MutableLiveData<DiscoverState>().apply { value = DiscoverState.Loading }
     var currentRegionCode: String? = settings.getDiscoveryCountryCode()
     var replacements = emptyMap<String, String>()
+    private var isFragmentChangingConfigurations: Boolean = false
+
+    fun onShown() {
+        if (!isFragmentChangingConfigurations) {
+            analyticsTracker.track(AnalyticsEvent.DISCOVER_SHOWN)
+        }
+    }
+
+    fun onFragmentPause(isChangingConfigurations: Boolean?) {
+        isFragmentChangingConfigurations = isChangingConfigurations ?: false
+    }
 
     fun loadData(resources: Resources) {
         val feed = repository.getDiscoverFeed()
 
-        feed.toFlowable().combineLatest(userManager.getSignInState())
+        feed.toFlowable()
             .subscribeBy(
-                onNext = { (it, subscriptionState) ->
+                onNext = {
                     val region = it.regions[currentRegionCode ?: it.defaultRegionCode] ?: it.regions[it.defaultRegionCode]
                     if (region == null) {
                         val message = "Could not get region $currentRegionCode"
@@ -68,8 +85,10 @@ class DiscoverViewModel @Inject constructor(
                         it.regionCodeToken to region.code,
                         it.regionNameToken to region.name
                     )
-                    val updatedList = it.layout.transformWithRegion(region, replacements, resources) // Update the list with the correct region substituted in where needed
-                        .filter { !subscriptionState.isSignedInAsPlusPaid || !it.sponsored } // Remove sponsored posts for paid users
+
+                    // Update the list with the correct region substituted in where needed
+                    val updatedList = it.layout.transformWithRegion(region, replacements, resources)
+
                     state.postValue(DiscoverState.DataLoaded(updatedList, region, it.regions.values.toList()))
                 },
                 onError = { throwable ->
@@ -88,11 +107,60 @@ class DiscoverViewModel @Inject constructor(
 
     fun loadPodcastList(source: String): Flowable<PodcastList> {
         return repository.getListFeed(source)
-            .map { PodcastList(it.podcasts ?: emptyList(), it.episodes ?: emptyList(), it.title, it.subtitle, it.description, it.collectionImageUrl, it.tintColors, it.collageImages) }
+            .map {
+                PodcastList(
+                    podcasts = it.podcasts ?: emptyList(),
+                    episodes = it.episodes ?: emptyList(),
+                    title = it.title,
+                    subtitle = it.subtitle,
+                    description = it.description,
+                    collectionImageUrl = it.collectionImageUrl,
+                    tintColors = it.tintColors,
+                    images = it.collageImages,
+                    listId = it.listId
+                )
+            }
             .flatMapPublisher { addSubscriptionStateToPodcasts(it) }
             .flatMap {
                 addPlaybackStateToList(it)
             }
+    }
+
+    fun loadCarouselSponsoredPodcasts(
+        sponsoredPodcastList: List<SponsoredPodcast>
+    ): Flowable<List<CarouselSponsoredPodcast>> {
+        val sponsoredPodcastsSources = sponsoredPodcastList
+            .filter {
+                val isInvalidSponsoredSource = it.source == null || it.position == null
+                if (isInvalidSponsoredSource) {
+                    val message = "Invalid sponsored source found."
+                    Timber.e(message)
+                    SentryHelper.recordException(InvalidObjectException(message))
+                }
+                !isInvalidSponsoredSource
+            }
+            .map { sponsoredPodcast ->
+                loadPodcastList(sponsoredPodcast.source as String)
+                    .filter {
+                        Timber.e("Invalid sponsored podcast list found.")
+                        it.podcasts.isNotEmpty() && it.listId != null
+                    }
+                    .map {
+                        CarouselSponsoredPodcast(
+                            podcast = it.podcasts.first(),
+                            position = sponsoredPodcast.position as Int,
+                            listId = it.listId as String
+                        )
+                    }
+            }
+
+        return if (sponsoredPodcastsSources.isNotEmpty()) {
+            Flowable.zip(sponsoredPodcastsSources) {
+                it.toList().filterIsInstance<CarouselSponsoredPodcast>()
+            }
+        } else {
+            Flowable.just(emptyList())
+        }
     }
 
     private fun addSubscriptionStateToPodcasts(list: PodcastList): Flowable<PodcastList> {
@@ -144,7 +212,7 @@ class DiscoverViewModel @Inject constructor(
         disposables.clear()
     }
 
-    fun findOrDownloadEpisode(discoverEpisode: DiscoverEpisode, success: (episode: Episode) -> Unit) {
+    fun findOrDownloadEpisode(discoverEpisode: DiscoverEpisode, success: (episode: PodcastEpisode) -> Unit) {
         podcastManager.findOrDownloadPodcastRx(discoverEpisode.podcast_uuid)
             .flatMapMaybe { episodeManager.findByUuidRx(discoverEpisode.uuid) }
             .subscribeOn(Schedulers.io())
@@ -162,7 +230,7 @@ class DiscoverViewModel @Inject constructor(
             .addTo(disposables)
     }
 
-    fun playEpisode(episode: Episode) {
+    fun playEpisode(episode: PodcastEpisode) {
         playbackManager.playNow(episode = episode, forceStream = true, playbackSource = playbackSource)
     }
 
@@ -185,5 +253,12 @@ data class PodcastList(
     val description: String?,
     val collectionImageUrl: String?,
     val tintColors: DiscoverFeedTintColors?,
-    val images: List<DiscoverFeedImage>?
+    val images: List<DiscoverFeedImage>?,
+    val listId: String? = null
+)
+
+data class CarouselSponsoredPodcast(
+    val podcast: DiscoverPodcast,
+    val position: Int,
+    val listId: String
 )

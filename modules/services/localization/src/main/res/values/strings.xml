@@ -3,10 +3,14 @@
     <string name="pocket_casts" translatable="false">@string/app_name</string>
     <string name="pocket_casts_plus" translatable="false">Pocket Casts Plus</string>
     <string name="pocket_casts_plus_short" translatable="false">Plus</string>
+    <string name="pocket_casts_patron" translatable="false">Pocket Casts Patron</string>
+    <string name="pocket_casts_patron_short" translatable="false">Patron</string>
 
     <string name="empty" translatable="false" />
 
+    <string name="account">Account</string>
     <string name="add_to_up_next">Add to Up Next</string>
+    <string name="add_to_up_next_question">Add to up next?</string>
     <string name="archive">Archive</string>
     <string name="unarchive">Unarchive</string>
     <string name="archive_episode">Archive episode</string>
@@ -25,12 +29,18 @@
     <string name="go_to_podcast">Go to podcast</string>
     <string name="go_to_files">Go to files</string>
     <string name="in_progress">In progress</string>
+    <string name="log_in">Log in</string>
+    <string name="log_in_subtitle">Start listening to your favourite podcasts</string>
+    <string name="log_out">Log out</string>
     <string name="mark_as_played">Mark as played</string>
     <string name="mark_as_unplayed">Mark as unplayed</string>
     <string name="mark_played">Mark played</string>
+    <string name="mark_unplayed">Mark unplayed</string>
     <string name="more">More</string>
     <string name="more_options">More options</string>
     <string name="next_episode">Next episode</string>
+    <string name="notifications_blocked_warning">Notifications are blocked. You can update permission through Settings.</string>
+    <string name="notifications_blocked_warning_snackbar_action" translatable="false">@string/update</string>
     <string name="ok">OK</string>
     <string name="options">Options</string>
     <string name="pause">Pause</string>
@@ -46,6 +56,7 @@
     <string name="play_on">Play on&#8230;</string>
     <string name="played">Played</string>
     <string name="remove_from_up_next">Remove from Up Next</string>
+    <string name="removed">Removed</string>
     <string name="search">Search</string>
     <string name="selected">Selected</string>
     <string name="not_selected">Not selected</string>
@@ -70,6 +81,8 @@
     <string name="stop_downloading">Stop downloading</string>
     <string name="stream">Stream</string>
     <string name="subscribe">Subscribe</string>
+    <string name="subscribe_to">Subscribe to %s</string>
+    <string name="upgrade_to">Upgrade to %s</string>
     <string name="unarchive_all">Unarchive all</string>
     <string name="unplayed">Unplayed</string>
     <string name="unsubscribe">Unsubscribe</string>
@@ -188,12 +201,23 @@
     <string name="stream_warning_title_not_wifi" translatable="false">@string/youre_not_on_wifi</string>
     <string name="stream_warning_title_metered_wifi" translatable="false">@string/youre_on_metered_wifi</string>
     <string name="stream_warning_summary">Streaming this episode will use data.</string>
+    <string name="stream_warning_summary_short">Streaming will use data. Proceed?</string>
     <string name="stream_warning_button">Stream Anyway</string>
 
     <string name="search_no_podcasts_found">No podcasts found</string>
     <string name="search_no_podcasts_found_summary">Try more general or different keywords.</string>
-    <string name="search_podcasts">Search podcasts</string>
+    <string name="search_podcasts_or_add_url">Search podcasts or add RSS URL</string>
+    <string name="search_podcasts">Search podcasts </string>
     <string name="search_hint">Search by podcast name</string>
+    <string name="search_history_clear_all_confirm_button_title">Clear Search History</string>
+    <string name="search_history_clear_all_confirmation_message">Are you sure you want to clear all your search history?</string>
+    <string name="search_history_recent_searches">Recent searches</string>
+    <string name="search_history_row_type_episode_subtitle">Episode \u2022 %s \u2022 %s</string>
+    <string name="search_history_row_type_folder_subtitle">Folder \u2022 %s</string>
+    <string name="search_history_row_type_podcast_subtitle">Podcast \u2022 %s</string>
+    <string name="search_results_all_episodes">All episodes</string>
+    <string name="search_results_all_podcasts">All podcasts</string>
+    <string name="search_show_all">Show all</string>
 
     <string name="time_short_hours">%dh</string>
     <string name="time_short_hours_minutes">%1$dh %2$dm</string>
@@ -258,6 +282,7 @@
     <string name="player_up_next_clear_queue_button">Clear Up Next</string>
     <string name="player_up_next_empty">Nothing in Up Next</string>
     <string name="player_up_next_empty_desc">You can queue episodes to play next by swiping right on episode rows, or tapping the icon on an episode card.</string>
+    <string name="player_up_next_empty_desc_watch">You can queue episodes to play next in the episode details screen.</string>
     <string name="player_up_next_move_to_bottom">Move to bottom</string>
     <string name="player_up_next_move_to_top">Move to top</string>
     <string name="player_up_next_select">Select</string>
@@ -281,6 +306,7 @@
     <!-- Podcasts -->
 
     <string name="podcasts">Podcasts</string>
+    <string name="podcasts_all">All podcasts</string>
     <string name="podcasts_archive" translatable="false">@string/archive</string>
     <string name="podcasts_badges_all_unfinished">All unfinished</string>
     <string name="podcasts_badges_off">Off</string>
@@ -371,6 +397,7 @@
 
     <!-- Podcast -->
 
+    <string name="podcast">Podcast</string>
     <string name="podcast_archive_all">Archive all</string>
     <string name="podcast_archive_all_played">Archive all played</string>
     <string name="podcast_archive_played">You should only do this if you don\'t want to see them anymore.</string>
@@ -500,6 +527,8 @@
     <string name="episode_short_episode">E%d</string>
     <string name="episode_added_to_up_next">Added to up next</string>
     <string name="episode_removed_from_up_next">Removed from up next</string>
+    <string name="episode_in_up_next">In up next</string>
+    <string name="episode_downloading">Downloading</string>
 
     <!-- Supporter -->
 
@@ -608,6 +637,7 @@
     <string name="profile">Profile</string>
     <string name="profile_access_ended">Access ended: %s</string>
     <string name="profile_access_ends">Access ends: %s</string>
+    <string name="profile_account">Account</string>
     <string name="profile_account_upgraded">Account Upgraded</string>
     <string name="profile_account_created">Account Created</string>
     <string name="profile_account_delete" translatable="false">@string/delete</string>
@@ -634,13 +664,16 @@
     <string name="profile_change_password_title">Change Password</string>
     <string name="profile_clean_up">Clean up</string>
     <string name="profile_clear_all">Clear all</string>
+    <string name="profile_clear_data">Clear data</string>
+    <string name="profile_clear_data_question">Clear data?</string>
+    <string name="profile_clear_data_would_you_also_like_question">Would you also like to clear all data from the app?</string>
     <string name="profile_clear_cannot_be_undone">This action cannot be undone.</string>
     <string name="profile_clear_listening_history">Clear listening history</string>
     <string name="profile_clear_listening_history_title">Clear Listening History</string>
     <string name="profile_cloud_add_to_up_next" translatable="false">@string/add_to_up_next</string>
     <string name="profile_cloud_after_playing">After playing</string>
     <string name="profile_cloud_all_files_added">All files added to your files will be added to Up Next.</string>
-    <string name="profile_cloud_auto_add_to_up_next">Auto Add To Up Next</string>
+    <string name="profile_cloud_auto_add_to_up_next">Auto add to Up Next</string>
     <string name="profile_cloud_auto_download_from_cloud">Auto download from cloud</string>
     <string name="profile_cloud_auto_upload_to_cloud">Auto upload to cloud</string>
     <string name="profile_cloud_cancel_upload">Cancel upload</string>
@@ -741,6 +774,7 @@
     <string name="profile_get_plus">Get Pocket Casts Plus to unlock this feature, plus lots more!</string>
     <string name="profile_help_support">Help support Pocket Casts by upgrading your account</string>
     <string name="profile_joined">Joined:</string>
+    <string name="profile_just_sign_out">Just sign out</string>
     <string name="profile_last_refresh">Last refresh: %s ago</string>
     <string name="profile_license_agreement">Pocket Casts values your privacy. This Privacy Policy explains what information we collect about you and why, what we may do with that information and how we handle it. It applies to the iOS and Android Pocket Casts apps, and the Pocket Casts web service with associated macOS and Windows apps (jointly and severally, the Service). By using the Service, you agree to this Privacy Policy. If you turn on push notifications in the app, we store the push token Apple provides us in order to deliver those push notifications to your device. If you buy the web app we store a transaction id for your purchase. If you choose not to create an account, and don&#x2019;t use push notifications, no data is stored about you on our servers. Pocket Casts web service also uses cookies and like technologies to keep you logged in. Should you choose to generate a support request from within the Service, we may generate an attachment containing additional data to assist in addressing your support request which you&#x2019;re welcome to view prior to submission.</string>
     <string name="profile_monthly">Monthly</string>
@@ -760,6 +794,7 @@
     <string name="profile_password">Password</string>
     <string name="profile_password_changed">Password Changed</string>
     <string name="profile_password_changed_successful">Successful!</string>
+    <string name="profile_patron_expires_in">Patron expires in %s</string>
     <string name="profile_payment_cancelled">Payment Cancelled</string>
     <string name="profile_payment_failed">Payment Failed</string>
     <string name="profile_payment_failed_detail">It looks like there was a problem processing your payment. Please try again.</string>
@@ -797,13 +832,14 @@
     <string name="profile_reset_password_sent">Password Reset Link Sent</string>
     <string name="profile_reset_password_check_email">Please check your email</string>
     <string name="profile_save_your_podcasts">Save your podcasts in the cloud and sync your progress with other devices</string>
-    <string name="profile_set_up_account">Set Up Account</string>
+    <string name="profile_set_up_account">Set up account</string>
     <string name="profile_share_stats">Share stats</string>
     <string name="profile_sign_in" translatable="false">@string/sign_in</string>
     <string name="profile_sign_in_or_create_account">Sign in or create account</string>
     <string name="profile_sign_out" translatable="false">@string/sign_out</string>
     <string name="profile_sign_out_confirm">Are you sure you want to sign out of syncing?</string>
     <string name="profile_signed_in_as">Signed in as</string>
+    <string name="profile_logging_in">Logging in…</string>
     <string name="profile_sonos">Sonos</string>
     <string name="profile_sonos_connect">Connect</string>
     <string name="profile_sonos_connect_account">Connecting to Sonos will allow the Sonos app to access your episode information.\n\nYour email address, password and other sensitive items are never shared.</string>
@@ -874,6 +910,7 @@
     <string name="profile_updates_ended">Updates ended: %s</string>
     <string name="profile_updates_ends">Updates end: %s</string>
     <string name="profile_upgrade_to_plus">Upgrade to Plus</string>
+    <string name="profile_upgrade_to_patron">Upgrade to Patron</string>
     <string name="profile_web_player">Web Player</string>
     <string name="profile_welcome_to_free">Welcome to Pocket Casts!</string>
     <string name="profile_welcome_to_plus">Welcome to Pocket Casts Plus!</string>
@@ -926,6 +963,12 @@
     <string name="plus_day">day</string>
     <string name="plus_yearly">Yearly</string>
     <string name="plus_monthly">Monthly</string>
+
+    <!-- Trial -->
+
+    <string name="trial_start">Start my free trial</string>
+    <string name="trial_then_per_month">Try %1$s, then %2$s per month</string>
+    <string name="trial_then_per_year">Try %1$s, then %2$s per year</string>
 
     <!-- Settings -->
 
@@ -1034,6 +1077,7 @@
     <string name="settings_media_notification_controls_title_play_next" translatable="false">@string/play_next</string>
     <string name="settings_media_notification_controls_title_playback_speed" translatable="false">@string/playback_speed</string>
     <string name="settings_media_notification_controls_title_star" translatable="false">@string/star</string>
+    <string name="settings_metered_data_warning">Metered data warning</string>
     <string name="settings_no_thanks">No thanks</string>
     <string name="settings_notifications_new_episodes">New Episodes</string>
     <string name="settings_notification_actions">Actions</string>
@@ -1050,8 +1094,8 @@
     <string name="settings_notification_vibrate">Vibrate when</string>
     <string name="settings_notification_vibrate_new_episodes">New episodes</string>
     <string name="settings_notification_vibrate_in_silent">Only in silent mode</string>
-    <string name="settings_notification_vibrate_never">New episodes</string>
-    <string name="settings_open_player_automatically">Open Player Automatically</string>
+    <string name="settings_notification_vibrate_never">Never</string>
+    <string name="settings_open_player_automatically">Open player automatically</string>
     <string name="settings_open_player_automatically_summary">If on, the full-screen player will open when you start playing a podcast episode.</string>
     <string name="settings_other_media_actions">Other media actions</string>
     <string name="settings_playback_resumption">Intelligent playback resumption</string>
@@ -1123,6 +1167,8 @@
     <string name="settings_theme">Theme</string>
     <string name="settings_title">Title</string>
     <string name="settings_title_about">About</string>
+    <string name="settings_title_advanced">Advanced</string>
+    <string name="settings_description_advanced">These settings are experimental. We recommend that most users not change these from their default values.</string>
     <string name="settings_title_appearance">Appearance</string>
     <string name="settings_title_auto_add_to_up_next">Auto add to Up Next</string>
     <string name="settings_title_auto_archive" translatable="false">@string/auto_archive</string>
@@ -1228,6 +1274,7 @@
     <string name="settings_notification_default_sound">Default sound</string>
     <string name="settings_import_title">Import subscriptions</string>
     <string name="settings_status_page">Status Page</string>
+    <string name="settings_logs">Logs</string>
     <string name="settings_status_description">Check your connection with important services. This helps diagnose issues with your network, proxies, VPN, ad-blocking and security apps.</string>
     <string name="settings_status_service_internet">Internet Connection</string>
     <string name="settings_status_run">Run now</string>
@@ -1275,6 +1322,8 @@
     <string name="settings_privacy_crash_link">Link your account to crashes</string>
     <string name="settings_privacy_crash_link_summary">Allow us to link your Pocket Casts account to crash reports.</string>
 
+    <string name="settings_advanced_sync_on_metered">Sync on Metered Networks</string>
+    <string name="settings_advanced_sync_on_metered_summary">Permits automatic background sync on metered networks. This is enabled by default and has no effect if background refresh is turned off.</string>
     <string name="whats_new_folders_title_7_20" translatable="false">@string/folders</string>
     <string name="whats_new_folders_7_20">If you love podcasts half as much as we do, you probably have a lot of them. If you\'re a Pocket Casts Plus subscriber, you can now sort these into folders and file them into neat groups.\n\nThanks to your support, your Home Screen has never looked better!</string>
     <string name="whats_new_grid_title_7_20">Home Grid Syncing</string>
@@ -1383,6 +1432,7 @@
     <string name="discover_popular_in">Popular in %s</string>
     <string name="discover_button_play_episode">Play Episode</string>
     <string name="discover_button_play_trailer">Play Trailer</string>
+    <string name="discover_sponsored">Sponsored</string>
 
     <!-- Server errors -->
 
@@ -1403,11 +1453,19 @@
     <string name="server_files_uuid_required">File uuid is required.</string>
     <string name="server_login_email_taken">Email taken</string>
     <string name="server_login_user_register_failed">Unable to create account, please try again later</string>
+    <string name="server_login_password_change_success">Successfully changed password</string>
+    <string name="server_login_password_change_failed">Unable to change password</string>
     <string name="server_files_invalid_content_type">Unable to upload, as we\'re unable to determine the content type of this file.</string>
     <string name="server_files_invalid_user">User is not logged in.</string>
     <string name="server_files_file_too_large">This file is too big to upload.</string>
     <string name="server_files_storage_limit_exceeded">You have exceeded the storage limit for your account.</string>
     <string name="server_files_title_required">Title is required.</string>
+    <string name="server_promo_winback_no_plus">Could not redeem this promo, because you are not currently a plus subscriber.</string>
+    <string name="server_user_email_failed">Error sending email.</string>
+    <string name="server_user_email_success">Successfully sent email.</string>
+    <string name="server_user_email_verification_failed">Email verification failed.</string>
+    <string name="server_user_change_email_success">Your email has been successfully changed.</string>
+    <string name="server_user_delete_account_with_sub_failed">Your account has an active Pocket Casts Plus subscription. Please cancel this first before deleting your account.</string>
 
     <!-- End of Year -->
 
@@ -1479,6 +1537,11 @@
     <string name="onboarding_sign_up">Sign up</string>
     <string name="onboarding_continue_with_google">Continue with Google</string>
     <string name="onboarding_continue_with_google_error">Unable to launch Google sign in.</string>
+    <string name="log_in_with_google">Log in with Google</string>
+    <string name="log_in_on_phone">Log in on phone</string>
+    <string name="log_in_with_email">Log in with email</string>
+    <string name="log_in_watch_from_phone_instructions_1">Log into Pocket Casts on a paired Android phone.</string>
+    <string name="log_in_watch_from_phone_instructions_2">The next time you open Pocket Casts on your watch and have a network connection, you will be logged in.</string>
     <string name="onboarding_discover_your_next_favorite_podcast">Discover your next favorite podcast</string>
     <string name="onboarding_create_an_account_to">Create an account to sync your listening experience across all your devices.</string>
     <string name="onboarding_get_the_newsletter">Get the newsletter</string>
@@ -1489,24 +1552,33 @@
     <string name="onboarding_recommendations_make_pocket_casts_yours">Make Pocket Casts yours by selecting your favorite podcasts or import them from another podcast player. You can always do this later.</string>
     <string name="onboarding_recommendations_import">Import</string>
     <string name="onboarding_recommendations_more">More %s</string>
-    <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Everything you love about Pocket Casts, plus more</string>
+    <string name="onboarding_upgrade_everything_you_love_about_pocket_casts_plus">Everything you love about Pocket&#160;Casts, plus more</string>
     <string name="onboarding_upgrade_exclusive_features_and_options">Get access to exclusive features and customization options</string>
+    <string name="onboarding_upgrade_no_subscriptions_found">No subscriptions found.</string>
     <string name="onboarding_upgrade_unlock_all_features">Unlock all features</string>
+    <string name="onboarding_patron_features_title">Believe in what we\’re doing and want to show your support?</string>
+    <string name="onboarding_patron_feature_everything_in_plus_title">Everything in Plus</string>
+    <string name="onboarding_patron_feature_cloud_storage_title">50GB Cloud Storage</string>
+    <string name="onboarding_patron_feature_profile_badge_title">Supporters profile badge</string>
+    <string name="onboarding_patron_feature_special_icons_title">Special Pocket Casts app icons</string>
+    <string name="onboarding_patron_feature_gratitude_title" translatable="false">@string/onboarding_plus_feature_gratitude_title</string>
+    <string name="onboarding_patron_subscribe">Subscribe to Pocket&#160;Casts Patron</string>
+    <string name="onboarding_plus_features_title" translatable="false">@string/onboarding_upgrade_everything_you_love_about_pocket_casts_plus</string>
     <string name="onboarding_plus_feature_desktop_apps_title">Desktop Apps</string>
     <string name="onboarding_plus_feature_desktop_apps_text">Listen in more places with our Windows, macOS, and Web apps.</string>
     <string name="onboarding_plus_feature_folders_title">Folders</string>
     <string name="onboarding_plus_feature_folders_text">Organize your podcasts in folders and keep them in sync across all your devices.</string>
     <string name="onboarding_plus_feature_cloud_storage_title">10GB Cloud Storage</string>
     <string name="onboarding_plus_feature_cloud_storage_text">Upload your files to cloud storage and have them available everywhere.</string>
-    <string name="onboarding_plus_feature_hide_ads_title">Hide Ads</string>
-    <string name="onboarding_plus_feature_hide_ads_text">Ad-free discovery which gives you more of what you love and less of what you don\'t.</string>
     <string name="onboarding_plus_feature_themes_icons_title">Themes &amp; Icons</string>
     <string name="onboarding_plus_feature_themes_icons_text">Fly your true colors. Exclusive icons and themes for the Plus club only.</string>
+    <string name="onboarding_plus_feature_gratitude_title">The undying gratitude of everyone here at Pocket Casts</string>
     <string name="onboarding_plus_become_a_plus_member">Become a Plus member and unlock all Pocket&#160;Casts features</string>
     <string name="onboarding_plus_continuing_agrees_to">By continuing, you agree to our %1$s and %2$s.</string>
     <string name="onboarding_plus_privacy_policy">Privacy Policy</string>
     <string name="onboarding_plus_terms_and_conditions">Terms and Conditions</string>
     <string name="onboarding_plus_start_free_trial_and_subscribe">Start free trial &amp; subscribe</string>
+    <string name="onboarding_plus_subscribe">Subscribe to Pocket&#160;Casts Plus</string>
     <string name="onboarding_plus_recurring_after_free_trial">Recurring payments will begin after your %s</string>
     <string name="onboarding_plus_can_be_canceled_at_any_time">Can be canceled at any time.</string>
     <string name="onboarding_welcome_get_you_listening">Welcome, now let\'s get you listening!</string>
@@ -1603,4 +1675,10 @@
     <string name="filter_id_description">An unique ID that represents the filter. Can be used on the \'Query Filter Episodes\' action.</string>
     <string name="filter_title">Filter Title</string>
     <string name="filter_id_or_title">Filter ID or Title</string>
+    <string name="error_opening_links_activity_not_found">Looks like you don\'t have an app capable of viewing this content.</string>
+
+    <!-- Wear -->
+
+    <string name="wear_hide_password">Hide password</string>
+    <string name="wear_show_password">Show password</string>
 </resources>

@@ -8,12 +8,12 @@ import android.os.Build
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import androidx.core.text.HtmlCompat
-import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.toPublisher
 import androidx.work.WorkManager
 import au.com.shiftyjelly.pocketcasts.localization.R
-import au.com.shiftyjelly.pocketcasts.models.entity.Episode
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.models.to.SubscriptionStatus
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadManager
@@ -24,6 +24,7 @@ import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PlaylistManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.repositories.subscription.SubscriptionManager
+import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.utils.FileUtil
 import au.com.shiftyjelly.pocketcasts.utils.Network
 import au.com.shiftyjelly.pocketcasts.utils.SystemBatteryRestrictions
@@ -58,6 +59,7 @@ class Support @Inject constructor(
     private val upNextQueue: UpNextQueue,
     private val subscriptionManager: SubscriptionManager,
     private val systemBatteryRestrictions: SystemBatteryRestrictions,
+    private val syncManager: SyncManager,
     @ApplicationContext private val context: Context
 ) : CoroutineScope {
 
@@ -70,7 +72,7 @@ class Support @Inject constructor(
         get() = context.resources.getStringArray(R.array.settings_auto_archive_inactive_values)
 
     @Suppress("DEPRECATION")
-    suspend fun sendEmail(subject: String, intro: String, context: Context): Intent {
+    suspend fun shareLogs(subject: String, intro: String, emailSupport: Boolean, context: Context): Intent {
         val dialog = withContext(Dispatchers.Main) {
             android.app.ProgressDialog.show(context, context.getString(R.string.loading), context.getString(R.string.settings_support_please_wait), true)
         }
@@ -78,7 +80,9 @@ class Support @Inject constructor(
 
         withContext(Dispatchers.IO) {
             intent.type = "text/html"
-            intent.putExtra(Intent.EXTRA_EMAIL, arrayOf("support@pocketcasts.com"))
+            if (emailSupport) {
+                intent.putExtra(Intent.EXTRA_EMAIL, arrayOf("support@pocketcasts.com"))
+            }
             val isPlus = subscriptionManager.getCachedStatus() is SubscriptionStatus.Plus
             intent.putExtra(
                 Intent.EXTRA_SUBJECT,
@@ -133,13 +137,13 @@ class Support @Inject constructor(
     }
 
     @Suppress("DEPRECATION")
-    private suspend fun getUserDebug(html: Boolean): String {
+    suspend fun getUserDebug(html: Boolean): String {
         val output = StringBuilder()
         try {
             val eol = if (html) "<br/>" else "\n"
             output.append("App version : ").append(settings.getVersion()).append(" (").append(settings.getVersionCode()).append(")").append(eol)
-            output.append("Sync account: ").append(if (settings.isLoggedIn()) settings.getSyncEmail() else "Not logged in").append(eol)
-            if (settings.isLoggedIn()) {
+            output.append("Sync account: ").append(if (syncManager.isLoggedIn()) syncManager.getEmail() else "Not logged in").append(eol)
+            if (syncManager.isLoggedIn()) {
                 output.append("Last Sync: ").append(settings.getLastModified() ?: "Never").append(eol)
             }
             val now = Date()
@@ -233,7 +237,10 @@ class Support @Inject constructor(
             output.append(eol)
 
             output.append("Work Manager Tasks").append(eol)
-            val workInfos = LiveDataReactiveStreams.toPublisher(ProcessLifecycleOwner.get(), WorkManager.getInstance(context).getWorkInfosByTagLiveData(DownloadManager.WORK_MANAGER_DOWNLOAD_TAG)).awaitFirst()
+            val workInfos = WorkManager.getInstance(context)
+                .getWorkInfosByTagLiveData(DownloadManager.WORK_MANAGER_DOWNLOAD_TAG)
+                .toPublisher(ProcessLifecycleOwner.get())
+                .awaitFirst()
             workInfos.forEach { workInfo ->
                 output.append(workInfo.toString()).append(" Attempt=").append(workInfo.runAttemptCount).append(eol)
             }
@@ -288,7 +295,7 @@ class Support @Inject constructor(
                 } else {
                     val episode = queue.first()
                     output.append("Episode: ").append(episode.title).append(eol)
-                    if (episode is Episode) {
+                    if (episode is PodcastEpisode) {
                         output.append("Podcast: ").append(episode.podcastUuid).append(eol)
                     } else {
                         output.append("Cloud File")
@@ -353,11 +360,11 @@ class Support @Inject constructor(
         return output.toString()
     }
 
-    private fun autoAddToUpNextToString(autoAddToUpNext: Int): String {
+    private fun autoAddToUpNextToString(autoAddToUpNext: Podcast.AutoAddUpNext): String {
         return when (autoAddToUpNext) {
-            Podcast.AUTO_ADD_TO_UP_NEXT_OFF -> "off"
-            Podcast.AUTO_ADD_TO_UP_NEXT_PLAY_NEXT -> "to top (play next)"
-            Podcast.AUTO_ADD_TO_UP_NEXT_PLAY_LAST -> "to bottom (play last)"
+            Podcast.AutoAddUpNext.OFF -> "off"
+            Podcast.AutoAddUpNext.PLAY_NEXT -> "to top (play next)"
+            Podcast.AutoAddUpNext.PLAY_LAST -> "to bottom (play last)"
             else -> "unknown value $autoAddToUpNext"
         }
     }

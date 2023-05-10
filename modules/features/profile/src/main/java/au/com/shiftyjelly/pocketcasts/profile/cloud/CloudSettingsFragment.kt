@@ -21,6 +21,7 @@ import au.com.shiftyjelly.pocketcasts.views.helper.NavigationIcon.BackArrow
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import au.com.shiftyjelly.pocketcasts.localization.R as LR
+import au.com.shiftyjelly.pocketcasts.ui.R as UR
 
 @AndroidEntryPoint
 class CloudSettingsFragment : BaseFragment() {
@@ -32,8 +33,13 @@ class CloudSettingsFragment : BaseFragment() {
 
     @Inject lateinit var settings: Settings
 
-    private val viewModel: AddFileViewModel by viewModels()
+    private val viewModel by viewModels<CloudSettingsViewModel>()
     private var binding: FragmentCloudSettingsBinding? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewModel.onShown()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         binding = FragmentCloudSettingsBinding.inflate(inflater, container, false)
@@ -54,8 +60,8 @@ class CloudSettingsFragment : BaseFragment() {
 
         context?.let { context ->
             AppCompatResources.getDrawable(context, R.drawable.ic_lock)?.let {
-                val color0 = ContextCompat.getColor(context, R.color.plus_gold_dark)
-                val color1 = ContextCompat.getColor(context, R.color.plus_gold_light)
+                val color0 = ContextCompat.getColor(context, UR.color.plus_gold_dark)
+                val color1 = ContextCompat.getColor(context, UR.color.plus_gold_light)
                 binding.imgLock.setup(it, color0, color1)
             }
         }
@@ -81,37 +87,37 @@ class CloudSettingsFragment : BaseFragment() {
         with(binding.swtAutoAddToUpNext) {
             isChecked = settings.getCloudAddToUpNext()
             setOnCheckedChangeListener { _, isChecked ->
-                settings.setCloudAddToUpNext(isChecked)
+                viewModel.setAddToUpNext(isChecked)
             }
         }
         with(binding.swtDeleteLocalFileAfterPlaying) {
-            isChecked = settings.getCloudDeleteAfterPlaying()
+            isChecked = settings.getDeleteLocalFileAfterPlaying()
             setOnCheckedChangeListener { _, isChecked ->
-                settings.setCloudDeleteAfterPlaying(isChecked)
+                viewModel.setDeleteLocalFileAfterPlaying(isChecked)
             }
         }
         with(binding.swtDeleteCloudFileAfterPlaying) {
-            isChecked = settings.getCloudDeleteCloudAfterPlaying()
+            isChecked = settings.getDeleteCloudFileAfterPlaying()
             setOnCheckedChangeListener { _, isChecked ->
-                settings.setCloudDeleteCloudAfterPlaying(isChecked)
+                viewModel.setDeleteCloudFileAfterPlaying(isChecked)
             }
         }
         with(binding.swtAutoUploadToCloud) {
             isChecked = settings.getCloudAutoUpload()
             setOnCheckedChangeListener { _, isChecked ->
-                settings.setCloudAutoUpload(isChecked)
+                viewModel.setCloudAutoUpload(isChecked)
             }
         }
         with(binding.swtAutoDownloadFromCloud) {
             isChecked = settings.getCloudAutoDownload()
             setOnCheckedChangeListener { _, isChecked ->
-                settings.setCloudAutoDownload(isChecked)
+                viewModel.setCloudAutoDownload(isChecked)
             }
         }
         with(binding.swtCloudOnlyOnWiFi) {
             isChecked = settings.getCloudOnlyWifi()
             setOnCheckedChangeListener { _, isChecked ->
-                settings.setCloudOnlyWifi(isChecked)
+                viewModel.setCloudOnlyWifi(isChecked)
             }
         }
 
@@ -128,6 +134,11 @@ class CloudSettingsFragment : BaseFragment() {
         ).forEach {
             it.setOnClickListener { openUpgradeSheet() }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.onFragmentPause(activity?.isChangingConfigurations)
     }
 
     private fun openUpgradeSheet() {

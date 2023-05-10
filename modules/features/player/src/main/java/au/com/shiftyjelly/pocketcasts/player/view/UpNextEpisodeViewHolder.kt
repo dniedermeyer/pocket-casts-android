@@ -18,7 +18,7 @@ import androidx.core.view.marginLeft
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
 import au.com.shiftyjelly.pocketcasts.localization.helper.RelativeDateFormatter
-import au.com.shiftyjelly.pocketcasts.models.entity.Playable
+import au.com.shiftyjelly.pocketcasts.models.entity.BaseEpisode
 import au.com.shiftyjelly.pocketcasts.player.R
 import au.com.shiftyjelly.pocketcasts.player.databinding.AdapterUpNextBinding
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
@@ -36,6 +36,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.rx2.asFlowable
 import timber.log.Timber
 import au.com.shiftyjelly.pocketcasts.ui.R as UR
 
@@ -81,10 +82,12 @@ class UpNextEpisodeViewHolder(
         }
     }
 
-    fun bind(episode: Playable, isMultiSelecting: Boolean, isSelected: Boolean) {
+    fun bind(episode: BaseEpisode, isMultiSelecting: Boolean, isSelected: Boolean) {
         val tintColor = ContextThemeWrapper(itemView.context, UR.style.ThemeDark).getAttrTextStyleColor(UR.attr.textSubtitle1)
 
-        disposable = episodeManager.observeByUuid(episode.uuid)
+        disposable = episodeManager
+            .observeByUuid(episode.uuid)
+            .asFlowable()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnNext {
@@ -133,7 +136,7 @@ class UpNextEpisodeViewHolder(
 
     override val episodeRow: ViewGroup
         get() = binding.itemContainer
-    override val episode: Playable?
+    override val episode: BaseEpisode?
         get() = binding.episode
     override val swipeLeftIcon: ImageView
         get() = binding.archiveIcon

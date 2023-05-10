@@ -5,58 +5,55 @@
     android:id="@+id/mainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/background_user_view_ripple"
-    tools:layout_height="80dp">
+    tools:layout_height="wrap_content">
 
     <au.com.shiftyjelly.pocketcasts.account.ProfileCircleView
         android:id="@+id/imgProfilePicture"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="18dp"
-        android:layout_marginBottom="18dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_width="@dimen/profile_picture_size_new"
+        android:layout_height="@dimen/profile_picture_size_new"
+        android:importantForAccessibility="no"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintDimensionRatio="W,1:1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/lblSignInStatus"
-        android:layout_width="0dp"
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/subscriptionTierPill"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        android:textAppearance="@style/C70"
-        android:textColor="?attr/primary_text_02"
-        app:layout_constraintBottom_toTopOf="@+id/lblUsername"
-        app:layout_constraintStart_toEndOf="@id/imgProfilePicture"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed"
-        tools:text="Not signed in" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/imgProfilePicture"
+        app:layout_constraintBottom_toBottomOf="@id/imgProfilePicture" />
 
     <TextView
-        android:id="@+id/lblUsername"
-        android:layout_width="0dp"
+        android:id="@+id/lblUserEmail"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:textAppearance="@style/H40"
+        android:layout_marginTop="16dp"
+        android:focusable="true"
+        android:gravity="center"
+        android:textAppearance="@style/H70"
+        android:textAlignment="center"
         android:textColor="?attr/primary_text_01"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/imgArrowRight"
-        app:layout_constraintStart_toStartOf="@id/lblSignInStatus"
-        app:layout_constraintTop_toBottomOf="@+id/lblSignInStatus"
-        tools:text="Setup Account" />
+        app:layout_constraintTop_toBottomOf="@id/subscriptionTierPill"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="xxx@gmail.com" />
 
-    <ImageView
-        android:id="@+id/imgArrowRight"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="8dp"
-        app:tint="?attr/primary_icon_02"
+    <Button
+        android:id="@+id/btnAccount"
+        android:text="@string/profile_set_up_account"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/PCAccountOutlinedButton"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"
+        android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_chevron_right" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/lblUserEmail"
+        tools:text="Set Up Account" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

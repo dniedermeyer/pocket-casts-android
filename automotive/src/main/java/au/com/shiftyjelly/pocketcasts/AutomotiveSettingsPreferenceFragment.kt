@@ -1,11 +1,10 @@
 package au.com.shiftyjelly.pocketcasts
 
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.Observer
+import androidx.lifecycle.toLiveData
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -16,6 +15,7 @@ import au.com.shiftyjelly.pocketcasts.models.to.RefreshState
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.ui.helper.FragmentHostListener
+import au.com.shiftyjelly.pocketcasts.views.extensions.setInputAsSeconds
 import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
@@ -25,16 +25,25 @@ import javax.inject.Inject
 import au.com.shiftyjelly.pocketcasts.localization.R as LR
 
 @AndroidEntryPoint
-class AutomotiveSettingsPreferenceFragment : PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener, Observer<RefreshState> {
+class AutomotiveSettingsPreferenceFragment : PreferenceFragmentCompat(), Observer<RefreshState> {
 
     @Inject lateinit var settings: Settings
     @Inject lateinit var podcastManager: PodcastManager
 
     private var preferenceRefreshNow: Preference? = null
+    private var preferenceSkipForward: EditTextPreference? = null
+    private var preferenceSkipBackward: EditTextPreference? = null
     private var refreshObservable: LiveData<RefreshState>? = null
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.preferences_auto)
+
+        preferenceSkipForward = preferenceManager.findPreference<EditTextPreference>(Settings.PREFERENCE_SKIP_FORWARD)?.apply {
+            setInputAsSeconds()
+        }
+        preferenceSkipBackward = preferenceManager.findPreference<EditTextPreference>(Settings.PREFERENCE_SKIP_BACKWARD)?.apply {
+            setInputAsSeconds()
+        }
 
         changeSkipTitles()
         setupRefreshNow()
@@ -63,14 +72,38 @@ class AutomotiveSettingsPreferenceFragment : PreferenceFragmentCompat(), SharedP
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        refreshObservable = LiveDataReactiveStreams.fromPublisher(
+        refreshObservable =
             settings.refreshStateObservable
                 .toFlowable(BackpressureStrategy.LATEST)
                 .switchMap { state ->
                     Flowable.interval(500, TimeUnit.MILLISECONDS).switchMap { Flowable.just(state) }
                 }
-        )
+                .toLiveData()
         refreshObservable?.observe(viewLifecycleOwner, this)
+
+        preferenceSkipForward?.setOnPreferenceChangeListener { _, newValue ->
+            val value = newValue.toString().toIntOrNull() ?: 0
+            if (value > 0) {
+                settings.setSkipForwardInSec(value)
+                settings.setSkipForwardNeedsSync(true)
+                changeSkipTitles()
+                true
+            } else {
+                false
+            }
+        }
+
+        preferenceSkipBackward?.setOnPreferenceChangeListener { _, newValue ->
+            val value = newValue.toString().toIntOrNull() ?: 0
+            if (value > 0) {
+                settings.setSkipBackwardInSec(value)
+                settings.setSkipBackNeedsSync(true)
+                changeSkipTitles()
+                true
+            } else {
+                false
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -79,8 +112,8 @@ class AutomotiveSettingsPreferenceFragment : PreferenceFragmentCompat(), SharedP
         refreshObservable?.removeObserver(this)
     }
 
-    override fun onChanged(state: RefreshState) {
-        updateRefreshSummary(state)
+    override fun onChanged(value: RefreshState) {
+        updateRefreshSummary(value)
     }
 
     private fun updateRefreshSummary(state: RefreshState) {
@@ -98,32 +131,10 @@ class AutomotiveSettingsPreferenceFragment : PreferenceFragmentCompat(), SharedP
         preferenceRefreshNow?.summary = status
     }
 
-    override fun onResume() {
-        super.onResume()
-        preferenceScreen.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
-    }
-
-    override fun onPause() {
-        super.onPause()
-        preferenceScreen.sharedPreferences?.unregisterOnSharedPreferenceChangeListener(this)
-    }
-
     private fun changeSkipTitles() {
         val skipForwardSummary = resources.getStringPluralSeconds(settings.getSkipForwardInSecs())
-        preferenceManager.findPreference<EditTextPreference>(Settings.PREFERENCE_SKIP_FORWARD)?.summary = skipForwardSummary
+        preferenceSkipForward?.summary = skipForwardSummary
         val skipBackwardSummary = resources.getStringPluralSeconds(settings.getSkipBackwardInSecs())
-        preferenceManager.findPreference<EditTextPreference>(Settings.PREFERENCE_SKIP_BACKWARD)?.summary = skipBackwardSummary
-    }
-
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
-        if (Settings.PREFERENCE_SKIP_FORWARD == key || Settings.PREFERENCE_SKIP_BACKWARD == key) {
-            changeSkipTitles()
-            settings.updateSkipValues()
-
-            when (key) {
-                Settings.PREFERENCE_SKIP_FORWARD -> settings.setSkipForwardNeedsSync(true)
-                Settings.PREFERENCE_SKIP_BACKWARD -> settings.setSkipBackNeedsSync(true)
-            }
-        }
+        preferenceSkipBackward?.summary = skipBackwardSummary
     }
 }

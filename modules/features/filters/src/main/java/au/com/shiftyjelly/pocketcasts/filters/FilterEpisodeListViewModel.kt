@@ -1,16 +1,17 @@
 package au.com.shiftyjelly.pocketcasts.filters
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.toLiveData
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsSource
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsTrackerWrapper
+import au.com.shiftyjelly.pocketcasts.analytics.EpisodeAnalytics
 import au.com.shiftyjelly.pocketcasts.analytics.FirebaseAnalyticsTracker
-import au.com.shiftyjelly.pocketcasts.models.entity.Episode
-import au.com.shiftyjelly.pocketcasts.models.entity.Playable
+import au.com.shiftyjelly.pocketcasts.models.entity.BaseEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.Playlist
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadManager
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
@@ -45,6 +46,7 @@ class FilterEpisodeListViewModel @Inject constructor(
     val downloadManager: DownloadManager,
     val settings: Settings,
     private val analyticsTracker: AnalyticsTrackerWrapper,
+    private val episodeAnalytics: EpisodeAnalytics,
 ) : ViewModel(), CoroutineScope {
 
     companion object {
@@ -59,7 +61,7 @@ class FilterEpisodeListViewModel @Inject constructor(
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Default
 
-    lateinit var episodesList: LiveData<List<Episode>>
+    lateinit var episodesList: LiveData<List<PodcastEpisode>>
     val playlist: MutableLiveData<Playlist> = MutableLiveData()
     val playlistDeleted: MutableLiveData<Boolean> = MutableLiveData(false)
 
@@ -88,7 +90,7 @@ class FilterEpisodeListViewModel @Inject constructor(
             }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeOn(Schedulers.io())
-        episodesList = LiveDataReactiveStreams.fromPublisher(episodes)
+        episodesList = episodes.toLiveData()
     }
 
     fun deletePlaylist() {
@@ -101,21 +103,23 @@ class FilterEpisodeListViewModel @Inject constructor(
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun episodeSwiped(episode: Playable, index: Int) {
-        if (episode !is Episode) return
+    fun episodeSwiped(episode: BaseEpisode, index: Int) {
+        if (episode !is PodcastEpisode) return
 
         launch {
             if (!episode.isArchived) {
                 episodeManager.archive(episode, playbackManager)
                 trackSwipeAction(SwipeAction.ARCHIVE)
+                episodeAnalytics.trackEvent(AnalyticsEvent.EPISODE_ARCHIVED, AnalyticsSource.FILTERS, episode.uuid)
             } else {
                 episodeManager.unarchive(episode)
                 trackSwipeAction(SwipeAction.UNARCHIVE)
+                episodeAnalytics.trackEvent(AnalyticsEvent.EPISODE_UNARCHIVED, AnalyticsSource.FILTERS, episode.uuid)
             }
         }
     }
 
-    fun onPlayAllFromHere(episode: Episode) {
+    fun onPlayAllFromHere(episode: PodcastEpisode) {
         launch {
             val episodes = episodesList.value ?: emptyList()
             val startIndex = episodes.indexOf(episode)
@@ -155,25 +159,25 @@ class FilterEpisodeListViewModel @Inject constructor(
         }
     }
 
-    fun episodeSwipeUpNext(episode: Playable) {
+    fun episodeSwipeUpNext(episode: BaseEpisode) {
         launch {
             if (playbackManager.upNextQueue.contains(episode.uuid)) {
-                playbackManager.removeEpisode(episode)
+                playbackManager.removeEpisode(episodeToRemove = episode, source = AnalyticsSource.FILTERS)
                 trackSwipeAction(SwipeAction.UP_NEXT_REMOVE)
             } else {
-                playbackManager.playNext(episode)
+                playbackManager.playNext(episode = episode, source = AnalyticsSource.FILTERS)
                 trackSwipeAction(SwipeAction.UP_NEXT_ADD_TOP)
             }
         }
     }
 
-    fun episodeSwipeUpLast(episode: Playable) {
+    fun episodeSwipeUpLast(episode: BaseEpisode) {
         launch {
             if (playbackManager.upNextQueue.contains(episode.uuid)) {
-                playbackManager.removeEpisode(episode)
+                playbackManager.removeEpisode(episodeToRemove = episode, source = AnalyticsSource.FILTERS)
                 trackSwipeAction(SwipeAction.UP_NEXT_REMOVE)
             } else {
-                playbackManager.playLast(episode)
+                playbackManager.playLast(episode = episode, source = AnalyticsSource.FILTERS)
                 trackSwipeAction(SwipeAction.UP_NEXT_ADD_BOTTOM)
             }
         }
@@ -189,7 +193,7 @@ class FilterEpisodeListViewModel @Inject constructor(
         }
     }
 
-    fun onFromHereCount(episode: Episode): Int {
+    fun onFromHereCount(episode: PodcastEpisode): Int {
         val episodes = episodesList.value ?: return 0
         val index = max(episodes.indexOf(episode), 0) // -1 on not found
         return min(episodes.count() - index, settings.getMaxUpNextEpisodes())

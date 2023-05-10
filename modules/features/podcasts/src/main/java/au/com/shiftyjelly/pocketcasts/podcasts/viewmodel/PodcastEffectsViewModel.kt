@@ -1,12 +1,12 @@
 package au.com.shiftyjelly.pocketcasts.podcasts.viewmodel
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.toLiveData
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsSource
-import au.com.shiftyjelly.pocketcasts.models.entity.Episode
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.models.type.TrimMode
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
@@ -36,7 +36,10 @@ class PodcastEffectsViewModel
     lateinit var podcast: LiveData<Podcast>
 
     fun loadPodcast(uuid: String) {
-        podcast = LiveDataReactiveStreams.fromPublisher(podcastManager.observePodcastByUuid(uuid).subscribeOn(Schedulers.io()))
+        podcast = podcastManager
+            .observePodcastByUuid(uuid)
+            .subscribeOn(Schedulers.io())
+            .toLiveData()
     }
 
     fun updateOverrideGlobalEffects(override: Boolean) {
@@ -99,7 +102,7 @@ class PodcastEffectsViewModel
     private fun shouldUpdatePlaybackManager(): Boolean {
         val podcast = this.podcast.value ?: return false
         val currentEpisode = playbackManager.upNextQueue.currentEpisode
-        val podcastUuid = if (currentEpisode is Episode) currentEpisode.podcastUuid else null
+        val podcastUuid = if (currentEpisode is PodcastEpisode) currentEpisode.podcastUuid else null
         return podcastUuid == podcast.uuid
     }
 

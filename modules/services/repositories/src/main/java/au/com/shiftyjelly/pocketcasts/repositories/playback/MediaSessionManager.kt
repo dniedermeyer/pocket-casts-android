@@ -16,10 +16,12 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.view.KeyEvent
 import androidx.annotation.DrawableRes
 import androidx.core.os.bundleOf
+import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsSource
-import au.com.shiftyjelly.pocketcasts.models.entity.Episode
-import au.com.shiftyjelly.pocketcasts.models.entity.Playable
+import au.com.shiftyjelly.pocketcasts.analytics.EpisodeAnalytics
+import au.com.shiftyjelly.pocketcasts.models.entity.BaseEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.Podcast
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.preferences.Settings.MediaNotificationControls
 import au.com.shiftyjelly.pocketcasts.repositories.extensions.saveToGlobalSettings
@@ -58,10 +60,17 @@ class MediaSessionManager(
     val episodeManager: EpisodeManager,
     val playlistManager: PlaylistManager,
     val settings: Settings,
-    val context: Context
+    val context: Context,
+    val episodeAnalytics: EpisodeAnalytics,
 ) : CoroutineScope {
     companion object {
         const val EXTRA_TRANSIENT = "pocketcasts_transient_loss"
+
+        // there's an issue on Samsung phones that if you don't say you support ACTION_SKIP_TO_PREVIOUS and
+        // ACTION_SKIP_TO_NEXT then the skip buttons on the lock screen are disabled. We work around this
+        // by hiding our custom buttons on Samsung phones. It means the buttons in Android Auto aren't our
+        // custom skip buttons, but it all still works.
+        private val MANUFACTURERS_TO_HIDE_CUSTOM_SKIP_BUTTONS = listOf("samsung", "mercedes-benz", "google")
 
         fun calculateSearchQueryOptions(query: String): List<String> {
             val options = mutableListOf<String>()
@@ -106,7 +115,13 @@ class MediaSessionManager(
         observePlaybackState()
         observeCustomMediaActionsVisibility()
         observeMediaNotificationControls()
-        playbackManager.upNextQueue.changesObservable
+        playbackManager.upNextQueue.getChangesObservableWithLiveCurrentEpisode(episodeManager, podcastManager)
+            // ignore the playing episode progress updates, but update when the media player read the duration from the file.
+            .distinctUntilChanged { stateOne, stateTwo ->
+                UpNextQueue.State.isEqualWithEpisodeCompare(stateOne, stateTwo) { episodeOne, episodeTwo ->
+                    episodeOne.uuid == episodeTwo.uuid && episodeOne.duration == episodeTwo.duration
+                }
+            }
             .observeOn(Schedulers.io())
             .doOnNext { updateUpNext(it) }
             .subscribeBy(onError = { Timber.e(it) })
@@ -143,7 +158,7 @@ class MediaSessionManager(
         mediaBrowser.connect()
     }
 
-    private fun getPlaybackStateRx(playbackState: PlaybackState, currentEpisode: Optional<Playable>): Single<PlaybackStateCompat> {
+    private fun getPlaybackStateRx(playbackState: PlaybackState, currentEpisode: Optional<BaseEpisode>): Single<PlaybackStateCompat> {
         return Single.fromCallable {
             getPlaybackStateCompat(playbackState, currentEpisode.get())
         }
@@ -154,7 +169,7 @@ class MediaSessionManager(
         mediaSession.setPlaybackState(playbackState)
     }
 
-    private fun getPlaybackStateCompat(playbackState: PlaybackState, currentEpisode: Playable?): PlaybackStateCompat {
+    private fun getPlaybackStateCompat(playbackState: PlaybackState, currentEpisode: BaseEpisode?): PlaybackStateCompat {
         if (playbackState.isError) {
             mediaSession.isActive = false
             return PlaybackStateCompat.Builder()
@@ -223,21 +238,23 @@ class MediaSessionManager(
         }
     }
 
-    fun updateUpNext(upNext: UpNextQueue.State) {
+    private fun updateUpNext(upNext: UpNextQueue.State) {
         try {
             mediaSession.setQueueTitle("Up Next")
             if (upNext is UpNextQueue.State.Loaded) {
                 updateMetadata(upNext.episode)
 
                 val items = upNext.queue.map { episode ->
-                    val podcastUuid = if (episode is Episode) episode.podcastUuid else null
+                    val podcastUuid = if (episode is PodcastEpisode) episode.podcastUuid else null
                     val podcast = podcastUuid?.let { podcastManager.findPodcastByUuid(it) }
                     val podcastTitle = episode.displaySubtitle(podcast)
+                    val localUri = AutoConverter.getBitmapUriForPodcast(podcast, episode, context)
                     val description = MediaDescriptionCompat.Builder()
                         .setDescription(episode.episodeDescription)
                         .setTitle(episode.title)
                         .setSubtitle(podcastTitle)
                         .setMediaId(episode.uuid)
+                        .setIconUri(localUri)
                         .build()
 
                     return@map MediaSessionCompat.QueueItem(description, episode.adapterId)
@@ -262,13 +279,13 @@ class MediaSessionManager(
             // ignore buffer position because it isn't displayed in the media session
             "updateBufferPosition"
         )
-        var previousEpisode: Playable? = null
+        var previousEpisode: BaseEpisode? = null
 
         playbackManager.playbackStateRelay
             .observeOn(Schedulers.io())
             .switchMap { state ->
                 val episodeSource =
-                    if (state.isEmpty) Observable.just(Optional.empty()) else episodeManager.observePlayableByUuid(state.episodeUuid).distinctUntilChanged(Playable.isMediaSessionEqual).map { Optional.of(it) }.toObservable()
+                    if (state.isEmpty) Observable.just(Optional.empty()) else episodeManager.observeEpisodeByUuidRx(state.episodeUuid).distinctUntilChanged(BaseEpisode.isMediaSessionEqual).map { Optional.of(it) }.toObservable()
                 Observables.combineLatest(Observable.just(state), episodeSource)
             }
             // ignore events until seeking has finished or the progress won't stay where the user requested
@@ -279,7 +296,7 @@ class MediaSessionManager(
             }
             .filter {
                 // allow the playback state and episode through when true
-                (!ignoreStates.contains(it.first.lastChangeFrom) && !seeking) || !Playable.isMediaSessionEqual(it.second.get(), previousEpisode)
+                (!ignoreStates.contains(it.first.lastChangeFrom) && !seeking) || !BaseEpisode.isMediaSessionEqual(it.second.get(), previousEpisode)
             }
             .doOnNext {
                 previousEpisode = it.second.get()
@@ -300,14 +317,14 @@ class MediaSessionManager(
             ).addTo(disposables)
     }
 
-    private fun updateMetadata(episode: Playable?) {
+    private fun updateMetadata(episode: BaseEpisode?) {
         if (episode == null) {
             Timber.i("MediaSession metadata. Nothing Playing.")
             mediaSession.setMetadata(NOTHING_PLAYING)
             return
         }
 
-        val podcastUuid = if (episode is Episode) episode.podcastUuid else null
+        val podcastUuid = if (episode is PodcastEpisode) episode.podcastUuid else null
         val podcast = podcastUuid?.let { podcastManager.findPodcastByUuid(it) }
 
         val podcastTitle = episode.displaySubtitle(podcast)
@@ -343,7 +360,7 @@ class MediaSessionManager(
         }
     }
 
-    private fun addCustomActions(stateBuilder: PlaybackStateCompat.Builder, currentEpisode: Playable, playbackState: PlaybackState) {
+    private fun addCustomActions(stateBuilder: PlaybackStateCompat.Builder, currentEpisode: BaseEpisode, playbackState: PlaybackState) {
         if (!shouldHideCustomSkipButtons()) {
             addCustomAction(stateBuilder, APP_ACTION_SKIP_BACK, "Skip back", IR.drawable.auto_skipback)
             addCustomAction(stateBuilder, APP_ACTION_SKIP_FWD, "Skip forward", IR.drawable.auto_skipforward)
@@ -387,7 +404,7 @@ class MediaSessionManager(
                     }
                 }
                 MediaNotificationControls.Star -> {
-                    if (currentEpisode is Episode) {
+                    if (currentEpisode is PodcastEpisode) {
                         if (currentEpisode.isStarred) {
                             addCustomAction(stateBuilder, APP_ACTION_UNSTAR, "Unstar", IR.drawable.auto_starred)
                         } else {
@@ -546,8 +563,8 @@ class MediaSessionManager(
                 logEvent("play from media id", inSessionCallback = false)
 
                 val autoMediaId = AutoMediaId.fromMediaId(mediaId)
-                val playableId = autoMediaId.playableId
-                episodeManager.findPlayableByUuid(playableId)?.let { episode ->
+                val episodeId = autoMediaId.episodeId
+                episodeManager.findEpisodeByUuid(episodeId)?.let { episode ->
                     playbackManager.playNow(episode, playbackSource = source)
 
                     playbackManager.lastLoadedFromPodcastOrPlaylistUuid = autoMediaId.sourceId
@@ -592,16 +609,21 @@ class MediaSessionManager(
 
     private fun markAsPlayed() {
         launch {
-            episodeManager.markAsPlayed(playbackManager.getCurrentEpisode(), playbackManager, podcastManager)
+            val episode = playbackManager.getCurrentEpisode()
+            episodeManager.markAsPlayed(episode, playbackManager, podcastManager)
+            episode?.let {
+                episodeAnalytics.trackEvent(AnalyticsEvent.EPISODE_MARKED_AS_PLAYED, source, it.uuid)
+            }
         }
     }
 
     private fun starEpisode() {
         launch {
             playbackManager.getCurrentEpisode()?.let {
-                if (it is Episode) {
+                if (it is PodcastEpisode) {
                     it.isStarred = true
                     episodeManager.starEpisode(it, true)
+                    episodeAnalytics.trackEvent(AnalyticsEvent.EPISODE_STARRED, source, it.uuid)
                 }
             }
         }
@@ -610,9 +632,10 @@ class MediaSessionManager(
     private fun unstarEpisode() {
         launch {
             playbackManager.getCurrentEpisode()?.let {
-                if (it is Episode) {
+                if (it is PodcastEpisode) {
                     it.isStarred = false
                     episodeManager.starEpisode(it, false)
+                    episodeAnalytics.trackEvent(AnalyticsEvent.EPISODE_UNSTARRED, source, it.uuid)
                 }
             }
         }
@@ -631,7 +654,7 @@ class MediaSessionManager(
             }
 
             val episode = playbackManager.getCurrentEpisode() ?: return@launch
-            if (episode is Episode) {
+            if (episode is PodcastEpisode) {
                 // update per podcast playback speed
                 val podcast = podcastManager.findPodcastByUuidSuspend(episode.podcastUuid)
                 if (podcast != null && podcast.overrideGlobalEffects) {
@@ -652,9 +675,10 @@ class MediaSessionManager(
     private fun archive() {
         launch {
             playbackManager.getCurrentEpisode()?.let {
-                if (it is Episode) {
+                if (it is PodcastEpisode) {
                     it.isArchived = true
                     episodeManager.archive(it, playbackManager)
+                    episodeAnalytics.trackEvent(AnalyticsEvent.EPISODE_ARCHIVED, source, it.uuid)
                 }
             }
         }
@@ -693,7 +717,7 @@ class MediaSessionManager(
             if (query.startsWith("next episode") || query.startsWith("next podcast")) {
                 val queueEpisodes = playbackManager.upNextQueue.queueEpisodes
                 queueEpisodes.firstOrNull()?.let { episode ->
-                    launch { playbackManager.playNext(episode) }
+                    launch { playbackManager.playNext(episode = episode, source = source) }
                     return@launch
                 }
             }
@@ -753,7 +777,7 @@ class MediaSessionManager(
         return Completable.fromAction { performPlayFromSearch(searchTerm) }
     }
 
-    private fun playEpisodes(episodes: List<Episode>, playbackSource: AnalyticsSource) {
+    private fun playEpisodes(episodes: List<PodcastEpisode>, playbackSource: AnalyticsSource) {
         if (episodes.isEmpty()) {
             return
         }
@@ -766,10 +790,8 @@ class MediaSessionManager(
         playbackManager.playNow(episode = latestEpisode, playbackSource = playbackSource)
     }
 
-    // there's an issue on Samsung phones that if you don't say you support ACTION_SKIP_TO_PREVIOUS and ACTION_SKIP_TO_NEXT then the skip buttons on the lock screen are disabled.
-    // we work around this by hiding our custom buttons on Samsung phones. It means the buttons in Android Auto aren't our custom skip buttons, but it all still works.
     private fun shouldHideCustomSkipButtons(): Boolean {
-        return Build.MANUFACTURER.lowercase() == "samsung"
+        return MANUFACTURERS_TO_HIDE_CUSTOM_SKIP_BUTTONS.contains(Build.MANUFACTURER.lowercase())
     }
 }
 

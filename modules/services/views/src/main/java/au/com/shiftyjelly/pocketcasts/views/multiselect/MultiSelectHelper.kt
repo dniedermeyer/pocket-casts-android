@@ -5,16 +5,17 @@ import android.content.res.Resources
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.LiveDataReactiveStreams
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
+import androidx.lifecycle.map
+import androidx.lifecycle.toLiveData
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsSource
 import au.com.shiftyjelly.pocketcasts.analytics.EpisodeAnalytics
 import au.com.shiftyjelly.pocketcasts.analytics.FirebaseAnalyticsTracker
 import au.com.shiftyjelly.pocketcasts.localization.extensions.getStringPlural
-import au.com.shiftyjelly.pocketcasts.models.entity.Episode
-import au.com.shiftyjelly.pocketcasts.models.entity.Playable
+import au.com.shiftyjelly.pocketcasts.models.entity.BaseEpisode
+import au.com.shiftyjelly.pocketcasts.models.entity.PodcastEpisode
 import au.com.shiftyjelly.pocketcasts.models.entity.UserEpisode
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.repositories.download.DownloadManager
@@ -58,15 +59,15 @@ class MultiSelectHelper @Inject constructor(
     interface Listener {
         fun multiSelectSelectAll()
         fun multiSelectSelectNone()
-        fun multiSelectSelectAllUp(episode: Playable)
-        fun multiSelectSelectAllDown(episode: Playable)
+        fun multiSelectSelectAllUp(episode: BaseEpisode)
+        fun multiSelectSelectAllDown(episode: BaseEpisode)
     }
 
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Default
 
     private val _isMultiSelectingLive = MutableLiveData<Boolean>().apply { value = false }
-    val isMultiSelectingLive = Transformations.map(_isMultiSelectingLive) { it }
+    val isMultiSelectingLive: LiveData<Boolean> = _isMultiSelectingLive
 
     var isMultiSelecting: Boolean = false
         set(value) {
@@ -75,17 +76,20 @@ class MultiSelectHelper @Inject constructor(
             selectedList.clear()
         }
 
-    private val selectedList: MutableList<Playable> = mutableListOf()
-    private val _selectedListLive = MutableLiveData<List<Playable>>().apply { value = listOf() }
-    val selectedListLive = Transformations.map(_selectedListLive) { it }
-    val selectedCount = Transformations.map(_selectedListLive) { it.size }
+    private val selectedList: MutableList<BaseEpisode> = mutableListOf()
+    private val selectedListLive = MutableLiveData<List<BaseEpisode>>().apply { value = listOf() }
+    val selectedCount: LiveData<Int> = selectedListLive.map { it.size }
 
-    private val settingsToolbarActions = LiveDataReactiveStreams.fromPublisher(settings.multiSelectItemsObservable.toFlowable(BackpressureStrategy.LATEST).map { MultiSelectAction.listFromIds(it) })
-    val toolbarActions = Transformations.map(settingsToolbarActions.combineLatest(selectedListLive)) { (actions, selectedEpisodes) ->
-        actions.mapNotNull {
-            MultiSelectAction.actionForGroup(it.groupId, selectedEpisodes)
+    val toolbarActions = settings.multiSelectItemsObservable
+        .toFlowable(BackpressureStrategy.LATEST)
+        .map { MultiSelectAction.listFromIds(it) }
+        .toLiveData()
+        .combineLatest(selectedListLive)
+        .map { (actions, selectedEpisodes) ->
+            actions.mapNotNull {
+                MultiSelectAction.actionForGroup(it.groupId, selectedEpisodes)
+            }
         }
-    }
 
     var coordinatorLayout: View? = null
     var context: Context? = null
@@ -93,7 +97,7 @@ class MultiSelectHelper @Inject constructor(
 
     lateinit var listener: Listener
 
-    fun defaultLongPress(episode: Playable, fragmentManager: FragmentManager) {
+    fun defaultLongPress(episode: BaseEpisode, fragmentManager: FragmentManager) {
         if (!isMultiSelecting) {
             isMultiSelecting = !isMultiSelecting
             select(episode)
@@ -177,7 +181,7 @@ class MultiSelectHelper @Inject constructor(
         }
     }
 
-    fun isSelected(episode: Playable): Boolean {
+    fun isSelected(episode: BaseEpisode): Boolean {
         return selectedList.count { it.uuid == episode.uuid } > 0
     }
 
@@ -189,41 +193,41 @@ class MultiSelectHelper @Inject constructor(
         listener.multiSelectSelectNone()
     }
 
-    fun selectAllAbove(episode: Playable) {
+    fun selectAllAbove(episode: BaseEpisode) {
         listener.multiSelectSelectAllUp(episode)
     }
 
-    fun selectAllBelow(episode: Playable) {
+    fun selectAllBelow(episode: BaseEpisode) {
         listener.multiSelectSelectAllDown(episode)
     }
 
-    fun select(episode: Playable) {
+    fun select(episode: BaseEpisode) {
         if (!isSelected(episode)) {
             selectedList.add(episode)
         }
-        _selectedListLive.value = selectedList
+        selectedListLive.value = selectedList
     }
 
-    fun selectAllInList(episodes: List<Playable>) {
+    fun selectAllInList(episodes: List<BaseEpisode>) {
         val trimmed = episodes.filter { !selectedList.contains(it) }
         selectedList.addAll(trimmed)
-        _selectedListLive.value = selectedList
+        selectedListLive.value = selectedList
     }
 
-    fun deselect(episode: Playable) {
+    fun deselect(episode: BaseEpisode) {
         val foundEpisode = selectedList.find { it.uuid == episode.uuid }
         foundEpisode?.let {
             selectedList.remove(it)
         }
 
-        _selectedListLive.value = selectedList
+        selectedListLive.value = selectedList
 
         if (selectedList.isEmpty()) {
             closeMultiSelect()
         }
     }
 
-    fun toggle(episode: Playable): Boolean {
+    fun toggle(episode: BaseEpisode): Boolean {
         if (isSelected(episode)) {
             deselect(episode)
             return false
@@ -247,6 +251,7 @@ class MultiSelectHelper @Inject constructor(
             }
 
             episodeManager.markAllAsPlayed(list, playbackManager, podcastManager)
+            episodeAnalytics.trackBulkEvent(AnalyticsEvent.EPISODE_BULK_MARKED_AS_PLAYED, source, list.size)
             launch(Dispatchers.Main) {
                 val snackText = resources.getStringPlural(selectedList.size, LR.string.marked_as_played_singular, LR.string.marked_as_played_plural)
                 showSnackBar(snackText)
@@ -265,6 +270,7 @@ class MultiSelectHelper @Inject constructor(
             val list = selectedList.toList()
 
             episodeManager.markAsUnplayed(list)
+            episodeAnalytics.trackBulkEvent(AnalyticsEvent.EPISODE_BULK_MARKED_AS_UNPLAYED, source, list.size)
             launch(Dispatchers.Main) {
                 val snackText = resources.getStringPlural(selectedList.size, LR.string.marked_as_unplayed_singular, LR.string.marked_as_unplayed_plural)
                 showSnackBar(snackText)
@@ -280,13 +286,14 @@ class MultiSelectHelper @Inject constructor(
         }
 
         launch {
-            val list = selectedList.filterIsInstance<Episode>().toList()
+            val list = selectedList.filterIsInstance<PodcastEpisode>().toList()
             if (!shownWarning && list.size > WARNING_LIMIT) {
                 archiveWarning(list.size, resources = resources, fragmentManager = fragmentManager)
                 return@launch
             }
 
             episodeManager.archiveAllInList(list, playbackManager)
+            episodeAnalytics.trackBulkEvent(AnalyticsEvent.EPISODE_BULK_ARCHIVED, source, list.size)
             withContext(Dispatchers.Main) {
                 val snackText = resources.getStringPlural(selectedList.size, LR.string.archived_episodes_singular, LR.string.archived_episodes_plural)
                 showSnackBar(snackText)
@@ -302,9 +309,10 @@ class MultiSelectHelper @Inject constructor(
         }
 
         launch {
-            val list = selectedList.filterIsInstance<Episode>().toList()
+            val list = selectedList.filterIsInstance<PodcastEpisode>().toList()
 
-            episodeManager.unarchiveAllInList(list)
+            episodeManager.unarchiveAllInList(episodes = list)
+            episodeAnalytics.trackBulkEvent(AnalyticsEvent.EPISODE_BULK_UNARCHIVED, source, list.size)
             withContext(Dispatchers.Main) {
                 val snackText = resources.getStringPlural(selectedList.size, LR.string.unarchived_episodes_singular, LR.string.unarchived_episodes_plural)
                 showSnackBar(snackText)
@@ -320,8 +328,9 @@ class MultiSelectHelper @Inject constructor(
         }
 
         launch {
-            val list = selectedList.filterIsInstance<Episode>().toList()
+            val list = selectedList.filterIsInstance<PodcastEpisode>().toList()
             episodeManager.updateAllStarred(list, starred = true)
+            episodeAnalytics.trackBulkEvent(AnalyticsEvent.EPISODE_BULK_STARRED, source, list.size)
             withContext(Dispatchers.Main) {
                 val snackText = resources.getStringPlural(selectedList.size, LR.string.starred_episodes_singular, LR.string.starred_episodes_plural)
                 showSnackBar(snackText)
@@ -337,8 +346,9 @@ class MultiSelectHelper @Inject constructor(
         }
 
         launch {
-            val list = selectedList.filterIsInstance<Episode>().toList()
+            val list = selectedList.filterIsInstance<PodcastEpisode>().toList()
             episodeManager.updateAllStarred(list, starred = false)
+            episodeAnalytics.trackBulkEvent(AnalyticsEvent.EPISODE_BULK_UNSTARRED, source, list.size)
             withContext(Dispatchers.Main) {
                 val snackText = resources.getStringPlural(selectedList.size, LR.string.unstarred_episodes_singular, LR.string.unstarred_episodes_plural)
                 showSnackBar(snackText)
@@ -397,7 +407,7 @@ class MultiSelectHelper @Inject constructor(
 
         val list = selectedList.toList()
         launch {
-            val episodes = list.filterIsInstance<Episode>()
+            val episodes = list.filterIsInstance<PodcastEpisode>()
             episodeManager.deleteEpisodeFiles(episodes, playbackManager)
 
             val userEpisodes = list.filterIsInstance<UserEpisode>()
@@ -437,7 +447,7 @@ class MultiSelectHelper @Inject constructor(
         val size = min(settings.getMaxUpNextEpisodes(), selectedList.count())
         val trimmedList = selectedList.subList(0, size).toList()
         launch {
-            playbackManager.playEpisodesNext(trimmedList)
+            playbackManager.playEpisodesNext(episodes = trimmedList, source = source)
             withContext(Dispatchers.Main) {
                 val snackText = resources.getStringPlural(size, LR.string.added_to_up_next_singular, LR.string.added_to_up_next_plural)
                 showSnackBar(snackText)
@@ -455,7 +465,7 @@ class MultiSelectHelper @Inject constructor(
         val size = min(settings.getMaxUpNextEpisodes(), selectedList.count())
         val trimmedList = selectedList.subList(0, size).toList()
         launch {
-            playbackManager.playEpisodesLast(trimmedList)
+            playbackManager.playEpisodesLast(episodes = trimmedList, source = source)
             withContext(Dispatchers.Main) {
                 val snackText = resources.getStringPlural(size, LR.string.added_to_up_next_singular, LR.string.added_to_up_next_plural)
                 showSnackBar(snackText)
@@ -504,19 +514,19 @@ class MultiSelectHelper @Inject constructor(
 
     fun moveToTop() {
         val list = selectedList.toList()
-        playbackManager.playEpisodesNext(list)
+        playbackManager.playEpisodesNext(episodes = list, source = source)
         closeMultiSelect()
     }
 
     fun moveToBottom() {
         val list = selectedList.toList()
-        playbackManager.playEpisodesLast(list)
+        playbackManager.playEpisodesLast(episodes = list, source = source)
         closeMultiSelect()
     }
 
     fun closeMultiSelect() {
         selectedList.clear()
-        _selectedListLive.value = selectedList
+        selectedListLive.value = selectedList
         isMultiSelecting = false
     }
 }

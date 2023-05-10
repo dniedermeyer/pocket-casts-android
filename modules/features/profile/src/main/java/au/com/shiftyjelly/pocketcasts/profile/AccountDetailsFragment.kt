@@ -10,14 +10,17 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.compose.ui.unit.dp
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import au.com.shiftyjelly.pocketcasts.account.ChangeEmailFragment
 import au.com.shiftyjelly.pocketcasts.account.ChangePwdFragment
-import au.com.shiftyjelly.pocketcasts.account.onboarding.upgrade.ProfilePlusUpgradeBanner
+import au.com.shiftyjelly.pocketcasts.account.onboarding.upgrade.ProfileUpgradeBanner
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsEvent
+import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsSource
 import au.com.shiftyjelly.pocketcasts.analytics.AnalyticsTrackerWrapper
 import au.com.shiftyjelly.pocketcasts.analytics.FirebaseAnalyticsTracker
 import au.com.shiftyjelly.pocketcasts.compose.AppTheme
@@ -26,7 +29,14 @@ import au.com.shiftyjelly.pocketcasts.models.to.SubscriptionStatus
 import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.profile.databinding.FragmentAccountDetailsBinding
 import au.com.shiftyjelly.pocketcasts.repositories.playback.PlaybackManager
+import au.com.shiftyjelly.pocketcasts.repositories.playback.UpNextQueue
+import au.com.shiftyjelly.pocketcasts.repositories.podcast.EpisodeManager
+import au.com.shiftyjelly.pocketcasts.repositories.podcast.FolderManager
+import au.com.shiftyjelly.pocketcasts.repositories.podcast.PlaylistManager
 import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
+import au.com.shiftyjelly.pocketcasts.repositories.podcast.UserEpisodeManager
+import au.com.shiftyjelly.pocketcasts.repositories.searchhistory.SearchHistoryManager
+import au.com.shiftyjelly.pocketcasts.repositories.sync.SyncManager
 import au.com.shiftyjelly.pocketcasts.repositories.user.UserManager
 import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingFlow
 import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingLauncher
@@ -38,6 +48,8 @@ import au.com.shiftyjelly.pocketcasts.utils.log.LogBuffer
 import au.com.shiftyjelly.pocketcasts.views.dialog.ConfirmationDialog
 import au.com.shiftyjelly.pocketcasts.views.fragments.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import java.util.Date
 import javax.inject.Inject
 import au.com.shiftyjelly.pocketcasts.cartheme.R as CR
@@ -54,11 +66,18 @@ class AccountDetailsFragment : BaseFragment() {
         }
     }
 
-    @Inject lateinit var settings: Settings
-    @Inject lateinit var userManager: UserManager
+    @Inject lateinit var analyticsTracker: AnalyticsTrackerWrapper
+    @Inject lateinit var episodeManager: EpisodeManager
+    @Inject lateinit var folderManager: FolderManager
+    @Inject lateinit var playlistManager: PlaylistManager
     @Inject lateinit var playbackManager: PlaybackManager
     @Inject lateinit var podcastManager: PodcastManager
-    @Inject lateinit var analyticsTracker: AnalyticsTrackerWrapper
+    @Inject lateinit var searchHistoryManager: SearchHistoryManager
+    @Inject lateinit var settings: Settings
+    @Inject lateinit var upNextQueue: UpNextQueue
+    @Inject lateinit var userEpisodeManager: UserEpisodeManager
+    @Inject lateinit var userManager: UserManager
+    @Inject lateinit var syncManager: SyncManager
 
     private val viewModel: AccountDetailsViewModel by viewModels()
     private var binding: FragmentAccountDetailsBinding? = null
@@ -100,18 +119,22 @@ class AccountDetailsFragment : BaseFragment() {
 
             binding.cancelViewGroup?.isVisible = signInState.isSignedInAsPlusPaid
             binding.btnCancelSub?.isVisible = signInState.isSignedInAsPlusPaid
+            // TODO: Patron - hide if upgraded to patron
+            binding.upgradeAccountGroup?.isVisible = signInState.isSignedInAsPlus && BuildConfig.ADD_PATRON_ENABLED
 
             binding.userUpgradeComposeView?.apply {
                 setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
                 setContent {
                     AppTheme(theme.activeTheme) {
                         if (subscription != null && (signInState.isSignedInAsFree || giftExpiring)) {
-                            ProfilePlusUpgradeBanner(
+                            binding.dividerView15?.isVisible = BuildConfig.ADD_PATRON_ENABLED
+                            ProfileUpgradeBanner(
                                 onClick = {
                                     val source = OnboardingUpgradeSource.PROFILE
                                     val onboardingFlow = OnboardingFlow.PlusAccountUpgrade(source)
                                     OnboardingLauncher.openOnboardingFlow(activity, onboardingFlow)
-                                }
+                                },
+                                modifier = Modifier.padding(top = 16.dp)
                             )
                         }
                     }
@@ -137,9 +160,18 @@ class AccountDetailsFragment : BaseFragment() {
             (activity as FragmentHostListener).addFragment(fragment)
         }
 
+        val showChangeButtons = !syncManager.isGoogleLogin()
+        binding.changeEmailPasswordGroup?.isVisible = showChangeButtons
+
         binding.btnChangePwd?.setOnClickListener {
             val fragment = ChangePwdFragment.newInstance()
             (this.activity as FragmentHostListener).addFragment(fragment)
+        }
+
+        binding.btnUpgradeAccount?.setOnClickListener {
+            val source = OnboardingUpgradeSource.ACCOUNT_DETAILS
+            val onboardingFlow = OnboardingFlow.PatronAccountUpgrade(source)
+            OnboardingLauncher.openOnboardingFlow(activity, onboardingFlow)
         }
 
         binding.btnCancelSub?.setOnClickListener {
@@ -242,9 +274,54 @@ class AccountDetailsFragment : BaseFragment() {
         val builder = AlertDialog.Builder(themedContext)
         builder.setTitle(getString(LR.string.profile_sign_out))
             .setMessage(getString(LR.string.profile_sign_out_confirm))
-            .setPositiveButton(getString(LR.string.profile_sign_out)) { _, _ -> performSignOut() }
+            .setPositiveButton(getString(LR.string.profile_sign_out)) { _, _ -> clearDataAlert() }
             .setNegativeButton(getString(LR.string.cancel), null)
             .show()
+    }
+
+    private fun clearDataAlert() {
+        val context = context ?: return
+        val themedContext = if (Util.isAutomotive(context)) ContextThemeWrapper(context, CR.style.Theme_Car_NoActionBar) else context
+        val builder = AlertDialog.Builder(themedContext)
+        builder.setTitle(getString(LR.string.profile_clear_data_question))
+            .setMessage(getString(LR.string.profile_clear_data_would_you_also_like_question))
+            .setPositiveButton(getString(LR.string.profile_just_sign_out)) { _, _ -> performSignOut() }
+            .setNegativeButton(getString(LR.string.profile_clear_data)) { _, _ ->
+                signOutAndClearData()
+            }
+            .show()
+    }
+
+    private fun signOutAndClearData() {
+        // Sign out first to make sure no data changes get synced
+        userManager.signOut(playbackManager, wasInitiatedByUser = true)
+
+        // Need to stop playback before we start clearing data
+        playbackManager.removeEpisode(
+            episodeToRemove = playbackManager.getCurrentEpisode(),
+            // Unknown is fine here because we don't send analytics when the user did not initiate the action
+            source = AnalyticsSource.UNKNOWN,
+            userInitiated = false,
+        )
+
+        // Block while clearing data so that users cannot interact with the until we're done clearing data
+        runBlocking(Dispatchers.IO) {
+
+            upNextQueue.removeAllIncludingChanges()
+
+            playlistManager.resetDb()
+            folderManager.deleteAll()
+            searchHistoryManager.clearAll()
+
+            podcastManager.deleteAllPodcasts()
+
+            userEpisodeManager.findUserEpisodes().forEach {
+                userEpisodeManager.delete(it, playbackManager)
+            }
+            episodeManager.deleteAll()
+        }
+
+        activity?.finish()
     }
 
     private fun performSignOut() {
