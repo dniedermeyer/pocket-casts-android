@@ -1,5 +1,4 @@
 @file:Suppress("UNREACHABLE_CODE", "UNUSED_PARAMETER")
-
 package au.com.shiftyjelly.pocketcasts.repositories.sync
 
 import android.annotation.SuppressLint
