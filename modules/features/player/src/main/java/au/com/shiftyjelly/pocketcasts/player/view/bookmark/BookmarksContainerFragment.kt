@@ -30,7 +30,7 @@ class BookmarksContainerFragment :
         private const val ARG_EPISODE_UUID = "episodeUUID"
         private const val ARG_SOURCE_VIEW = "sourceView"
         fun newInstance(
-            episodeUuid: String,
+            episodeUuid: String? = null,
             sourceView: SourceView,
         ) = BookmarksContainerFragment().apply {
             arguments = bundleOf(
@@ -50,7 +50,7 @@ class BookmarksContainerFragment :
         get() = StatusBarColor.Custom(
             context?.getThemeColor(UR.attr.primary_ui_01)
                 ?: Color.WHITE,
-            theme.isDarkTheme
+            theme.isDarkTheme,
         )
 
     var binding: FragmentBookmarksContainerBinding? = null
@@ -78,7 +78,7 @@ class BookmarksContainerFragment :
                     }
                     dismiss()
                 }
-            }
+            },
         )
 
         bottomSheetDialog?.behavior?.apply {
@@ -105,12 +105,20 @@ class BookmarksContainerFragment :
                 BookmarksFragment.newInstance(
                     sourceView = sourceView,
                     episodeUuid = episodeUUID,
-                )
+                ),
             )
             .addToBackStack(null)
             .commit()
 
-        binding.btnClose.setOnClickListener { dismiss() }
+        dialog?.let {
+            binding.btnClose.setOnClickListener { dismiss() }
+        } ?: run {
+            binding.btnClose.setImageResource(R.drawable.ic_arrow_back)
+            binding.btnClose.setOnClickListener {
+                @Suppress("DEPRECATION")
+                activity?.onBackPressed()
+            }
+        }
     }
 
     private fun FragmentBookmarksContainerBinding.setupMultiSelectHelper() {
@@ -123,7 +131,7 @@ class BookmarksContainerFragment :
             lifecycleOwner = viewLifecycleOwner,
             multiSelectHelper = bookmarksViewModel.multiSelectHelper,
             menuRes = null,
-            fragmentManager = parentFragmentManager,
+            activity = requireActivity(),
         )
     }
 

@@ -30,14 +30,13 @@ import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingLauncher
 import au.com.shiftyjelly.pocketcasts.settings.onboarding.OnboardingUpgradeSource
 import au.com.shiftyjelly.pocketcasts.ui.helper.FragmentHostListener
 import au.com.shiftyjelly.pocketcasts.ui.theme.Theme
-import au.com.shiftyjelly.pocketcasts.utils.featureflag.Feature
-import au.com.shiftyjelly.pocketcasts.utils.featureflag.FeatureTier
 import au.com.shiftyjelly.pocketcasts.views.R
 import au.com.shiftyjelly.pocketcasts.views.dialog.OptionsDialog
 import au.com.shiftyjelly.pocketcasts.views.fragments.BaseFragment
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.flow.distinctUntilChanged
 import au.com.shiftyjelly.pocketcasts.images.R as IR
 import au.com.shiftyjelly.pocketcasts.localization.R as LR
 
@@ -94,39 +93,44 @@ class BookmarksFragment : BaseFragment() {
                 // https://stackoverflow.com/a/70195667/193545
                 Surface(modifier = Modifier.nestedScroll(rememberNestedScrollInteropConnection())) {
                     val listData = playerViewModel.listDataLive.asFlow()
+                        // ignore the episode progress
+                        .distinctUntilChanged { t1, t2 ->
+                            t1.podcastHeader.episodeUuid == t2.podcastHeader.episodeUuid &&
+                                t1.podcastHeader.isPlaying == t2.podcastHeader.isPlaying
+                        }
                         .collectAsState(initial = null)
 
                     val episodeUuid = episodeUuid(listData)
-                    if (episodeUuid != null) {
-                        BookmarksPage(
-                            episodeUuid = episodeUuid,
-                            backgroundColor = requireNotNull(backgroundColor(listData)),
-                            textColor = requireNotNull(textColor(listData)),
-                            sourceView = sourceView,
-                            bookmarksViewModel = bookmarksViewModel,
-                            multiSelectHelper = bookmarksViewModel.multiSelectHelper,
-                            onRowLongPressed = { bookmark ->
-                                bookmarksViewModel.multiSelectHelper.defaultLongPress(
-                                    multiSelectable = bookmark,
-                                    fragmentManager = childFragmentManager,
-                                    forceDarkTheme = sourceView == SourceView.PLAYER,
-                                )
-                            },
-                            onEditBookmarkClick = ::onEditBookmarkClick,
-                            onUpgradeClicked = ::onUpgradeClicked,
-                            showOptionsDialog = { showOptionsDialog(it) },
-                            openFragment = { fragment ->
-                                (parentFragment as? BottomSheetDialogFragment)?.dismiss() // Closes bookmarks bottom sheet dialog if opened from user files
-                                val fragmentHostListener = (activity as? FragmentHostListener)
-                                fragmentHostListener?.apply {
-                                    closePlayer() // Closes player if open
-                                    openTab(R.id.navigation_profile)
-                                    addFragment(SettingsFragment())
-                                    addFragment(fragment)
-                                }
+                    BookmarksPage(
+                        episodeUuid = episodeUuid,
+                        backgroundColor = backgroundColor(listData),
+                        textColor = textColor(listData),
+                        sourceView = sourceView,
+                        bookmarksViewModel = bookmarksViewModel,
+                        multiSelectHelper = bookmarksViewModel.multiSelectHelper,
+                        onRowLongPressed = { bookmark ->
+                            bookmarksViewModel.multiSelectHelper.defaultLongPress(
+                                multiSelectable = bookmark,
+                                fragmentManager = childFragmentManager,
+                                forceDarkTheme = sourceView == SourceView.PLAYER,
+                            )
+                        },
+                        onShareBookmarkClick = ::onShareBookmarkClick,
+                        onEditBookmarkClick = ::onEditBookmarkClick,
+                        onUpgradeClicked = ::onUpgradeClicked,
+                        showOptionsDialog = { showOptionsDialog(it) },
+                        openFragment = { fragment ->
+                            val bottomSheet = (parentFragment as? BottomSheetDialogFragment)
+                            if (sourceView != SourceView.PROFILE) bottomSheet?.dismiss() // Do not close bookmarks container dialog if opened from profile
+                            val fragmentHostListener = (activity as? FragmentHostListener)
+                            fragmentHostListener?.apply {
+                                closePlayer() // Closes player if open
+                                openTab(R.id.navigation_profile)
+                                addFragment(SettingsFragment())
+                                addFragment(fragment)
                             }
-                        )
-                    }
+                        },
+                    )
                 }
             }
         }
@@ -143,6 +147,7 @@ class BookmarksFragment : BaseFragment() {
     private fun backgroundColor(listData: State<PlayerViewModel.ListData?>) =
         when (sourceView) {
             SourceView.PLAYER -> listData.value?.let { Color(it.podcastHeader.backgroundColor) }
+                ?: MaterialTheme.theme.colors.primaryUi01
             else -> MaterialTheme.theme.colors.primaryUi01
         }
 
@@ -150,6 +155,7 @@ class BookmarksFragment : BaseFragment() {
     private fun textColor(listData: State<PlayerViewModel.ListData?>) =
         when (sourceView) {
             SourceView.PLAYER -> listData.value?.let { Color(it.podcastHeader.backgroundColor) }
+                ?: MaterialTheme.theme.colors.primaryUi01
             else -> MaterialTheme.theme.colors.primaryText02
         }
 
@@ -162,7 +168,7 @@ class BookmarksFragment : BaseFragment() {
                     imageId = IR.drawable.ic_multiselect,
                     click = {
                         bookmarksViewModel.multiSelectHelper.isMultiSelecting = true
-                    }
+                    },
                 )
                 .addTextOption(
                     titleId = LR.string.bookmarks_sort_option,
@@ -173,14 +179,18 @@ class BookmarksFragment : BaseFragment() {
                             settings = settings,
                             changeSortOrder = bookmarksViewModel::changeSortOrder,
                             sourceView = sourceView,
-                            forceDarkTheme = true,
+                            forceDarkTheme = sourceView == SourceView.PLAYER,
                         ).show(
                             context = requireContext(),
-                            fragmentManager = it
+                            fragmentManager = it,
                         )
-                    }
+                    },
                 ).show(it, "bookmarks_options_dialog")
         }
+    }
+
+    private fun onShareBookmarkClick() {
+        bookmarksViewModel.onShareClicked(requireContext())
     }
 
     private fun onEditBookmarkClick() {
@@ -190,11 +200,8 @@ class BookmarksFragment : BaseFragment() {
     }
 
     private fun onUpgradeClicked() {
-        val source = OnboardingUpgradeSource.BOOKMARKS
         val onboardingFlow = OnboardingFlow.Upsell(
-            source = source,
-            showPatronOnly = Feature.BOOKMARKS_ENABLED.tier == FeatureTier.Patron ||
-                Feature.BOOKMARKS_ENABLED.isCurrentlyExclusiveToPatron(),
+            source = OnboardingUpgradeSource.BOOKMARKS,
         )
         OnboardingLauncher.openOnboardingFlow(activity, onboardingFlow)
     }

@@ -15,10 +15,10 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import au.com.shiftyjelly.pocketcasts.ui.R as UR
 
 @AndroidEntryPoint
@@ -62,16 +62,16 @@ open class BaseDialogFragment : BottomSheetDialogFragment(), CoroutineScope {
     }
 
     private fun addDismissCallback() {
-        val dialog = dialog as BottomSheetDialog
-        (dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet) as FrameLayout?)?.let { bottomSheet ->
+        val dialog = dialog as? BottomSheetDialog
+        (dialog?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet) as? FrameLayout?)?.let { bottomSheet ->
             val behavior = BottomSheetBehavior.from(bottomSheet)
             behavior.addBottomSheetCallback(dismissCallback)
         }
     }
 
     private fun removeDismissCallback() {
-        val dialog = dialog as BottomSheetDialog
-        (dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet) as FrameLayout?)?.let { bottomSheet ->
+        val dialog = dialog as? BottomSheetDialog
+        (dialog?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet) as? FrameLayout?)?.let { bottomSheet ->
             val behavior = BottomSheetBehavior.from(bottomSheet)
             behavior.removeBottomSheetCallback(dismissCallback)
         }
@@ -88,8 +88,8 @@ open class BaseDialogFragment : BottomSheetDialogFragment(), CoroutineScope {
         // as it causes the bottomsheet flicker to the expanded state
         if (isBeingDragged) return
 
-        val dialog = dialog as BottomSheetDialog
-        (dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet) as FrameLayout?)?.let { bottomSheet ->
+        val dialog = dialog as? BottomSheetDialog
+        (dialog?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet) as? FrameLayout?)?.let { bottomSheet ->
             val behavior = BottomSheetBehavior.from(bottomSheet)
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
             behavior.peekHeight = BottomSheetBehavior.PEEK_HEIGHT_AUTO

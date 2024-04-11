@@ -5,8 +5,8 @@ import androidx.annotation.IntDef;
 import androidx.annotation.OptIn;
 import androidx.media3.common.C;
 import androidx.media3.common.audio.AudioProcessor;
+import androidx.media3.common.audio.BaseAudioProcessor;
 import androidx.media3.common.util.UnstableApi;
-import androidx.media3.exoplayer.audio.BaseAudioProcessor;
 import androidx.media3.common.util.Assertions;
 import androidx.media3.common.util.Util;
 
@@ -179,6 +179,11 @@ public final class ShiftyTrimSilenceProcessor extends BaseAudioProcessor {
         if (!hasOutputNoise) {
             skippedFrames += paddingSize / bytesPerFrame;
         }
+        hasOutputNoise = false;
+        maybeSilenceBuffer = Util.EMPTY_BYTE_ARRAY;
+        maybeSilenceBufferSize = 0;
+        paddingBuffer = Util.EMPTY_BYTE_ARRAY;
+        paddingSize = 0;
     }
 
     @Override
@@ -205,9 +210,11 @@ public final class ShiftyTrimSilenceProcessor extends BaseAudioProcessor {
     @Override
     protected void onReset() {
         enabled = false;
-        paddingSize = 0;
+        hasOutputNoise = false;
         maybeSilenceBuffer = Util.EMPTY_BYTE_ARRAY;
+        maybeSilenceBufferSize = 0;
         paddingBuffer = Util.EMPTY_BYTE_ARRAY;
+        paddingSize = 0;
     }
 
     // Internal methods.
