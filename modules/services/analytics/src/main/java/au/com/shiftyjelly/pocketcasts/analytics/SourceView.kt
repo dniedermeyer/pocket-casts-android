@@ -27,6 +27,7 @@ enum class SourceView(val analyticsValue: String) {
     AUTO_PAUSE("auto_pause"),
     PLAYER_PLAYBACK_EFFECTS("player_playback_effects"),
     PODCAST_SETTINGS("podcast_settings"),
+    PROFILE("profile"),
     ONBOARDING_RECOMMENDATIONS("onboarding_recommendations"),
     ONBOARDING_RECOMMENDATIONS_SEARCH("onboarding_recommendations_search"),
     UNKNOWN("unknown"),
@@ -34,7 +35,9 @@ enum class SourceView(val analyticsValue: String) {
     EPISODE_SWIPE_ACTION("episode_swipe_action"),
     MULTI_SELECT("multi_select"),
     STATS("stats"),
-    WHATS_NEW("whats_new");
+    WHATS_NEW("whats_new"),
+    METERED_NETWORK_CHANGE("metered_network_change"),
+    ;
 
     fun skipTracking() = this in listOf(AUTO_PLAY, AUTO_PAUSE)
 

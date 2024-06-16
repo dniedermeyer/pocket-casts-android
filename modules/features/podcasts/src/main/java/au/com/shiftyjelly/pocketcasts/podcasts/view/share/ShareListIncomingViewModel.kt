@@ -12,11 +12,11 @@ import au.com.shiftyjelly.pocketcasts.repositories.podcast.PodcastManager
 import au.com.shiftyjelly.pocketcasts.servers.list.ListServerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.schedulers.Schedulers
+import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
 
 @HiltViewModel
 class ShareListIncomingViewModel
@@ -40,7 +40,7 @@ class ShareListIncomingViewModel
 
     fun loadShareUrl(url: String) {
         share.postValue(ShareState.Loading)
-        val id = listServerManager.extractShareListIdFromWebUrl(url) ?: return
+        val id = listServerManager.extractShareListIdFromWebUrl(url)
         viewModelScope.launch {
             try {
                 val list = listServerManager.openPodcastList(id)

@@ -8,7 +8,9 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import au.com.shiftyjelly.pocketcasts.models.type.EpisodeViewSource
 import au.com.shiftyjelly.pocketcasts.ui.helper.FragmentHostListener
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import dagger.hilt.android.AndroidEntryPoint
+import kotlin.time.Duration
 import au.com.shiftyjelly.pocketcasts.images.R as IR
 import au.com.shiftyjelly.pocketcasts.profile.R as PR
 
@@ -113,18 +115,20 @@ class AutomotiveSettingsActivity : AppCompatActivity(), FragmentHostListener {
     override fun updateStatusBar() {
     }
 
-    override fun updatePlayerView() {
-    }
-
     override fun getPlayerBottomSheetState(): Int {
         return 0
     }
+
+    override fun addPlayerBottomSheetCallback(callback: BottomSheetBehavior.BottomSheetCallback) = Unit
+
+    override fun removePlayerBottomSheetCallback(callback: BottomSheetBehavior.BottomSheetCallback) = Unit
 
     override fun openEpisodeDialog(
         episodeUuid: String?,
         source: EpisodeViewSource,
         podcastUuid: String?,
         forceDark: Boolean,
+        timestamp: Duration?,
     ) {
     }
 

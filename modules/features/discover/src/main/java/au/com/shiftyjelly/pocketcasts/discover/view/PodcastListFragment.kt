@@ -121,7 +121,7 @@ class PodcastListFragment : PodcastGridListFragment() {
             bodyTextView = binding.lblBody,
             linkView = binding.linkLayout,
             linkTextView = binding.lblLinkTitle,
-            toolbar = binding.toolbar
+            toolbar = binding.toolbar,
         )
     }
 
@@ -141,7 +141,7 @@ class PodcastListFragment : PodcastGridListFragment() {
             toolbar = toolbar,
             title = "",
             menu = R.menu.discover_share,
-            navigationIcon = BackArrow
+            navigationIcon = BackArrow,
         )
         toolbar.setOnMenuItemClickListener(this)
 
@@ -161,6 +161,7 @@ class PodcastListFragment : PodcastGridListFragment() {
             is ExpandedStyle.RankedList -> RankedListAdapter(onPodcastClicked, onPodcastSubscribe, tagline, theme)
             is ExpandedStyle.DescriptiveList -> DescriptiveListAdapter(onPodcastClicked, onPodcastSubscribe) as ListAdapter<Any, RecyclerView.ViewHolder>
             is ExpandedStyle.GridList -> GridListAdapter(GridListAdapter.defaultImageSize, onPodcastClicked, onPodcastSubscribe) as ListAdapter<Any, RecyclerView.ViewHolder>
+            else -> PlainListAdapter(onPodcastClicked, onPodcastSubscribe, onPromotionClick, onEpisodeClick, onEpisodePlayClick, onEpisodeStopClick)
         }
         recyclerView.adapter = adapter
         (recyclerView.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false

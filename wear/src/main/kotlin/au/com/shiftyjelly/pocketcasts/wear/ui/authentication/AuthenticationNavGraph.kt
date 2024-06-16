@@ -4,9 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.navigation
-import au.com.shiftyjelly.pocketcasts.wear.extensions.responsive
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.horologist.compose.layout.ScalingLazyColumnDefaults
 import com.google.android.horologist.compose.navscaffold.composable
 import com.google.android.horologist.compose.navscaffold.scrollable
 
@@ -23,11 +21,8 @@ fun NavGraphBuilder.authenticationNavGraph(
     googleSignInSuccessScreen: @Composable (GoogleSignInAccount?) -> Unit,
 ) {
     navigation(startDestination = AuthenticationNavRoutes.loginScreen, route = authenticationSubGraph) {
-
-        scrollable(
-            route = AuthenticationNavRoutes.loginScreen,
-            columnStateFactory = ScalingLazyColumnDefaults.responsive(),
-        ) {
+        @Suppress("DEPRECATION")
+        scrollable(AuthenticationNavRoutes.loginScreen) {
             LoginScreen(
                 columnState = it.columnState,
                 onLoginWithGoogleClick = {
@@ -39,16 +34,15 @@ fun NavGraphBuilder.authenticationNavGraph(
             )
         }
 
-        scrollable(
-            route = AuthenticationNavRoutes.loginWithPhone,
-            columnStateFactory = ScalingLazyColumnDefaults.responsive(),
-        ) {
+        @Suppress("DEPRECATION")
+        scrollable(AuthenticationNavRoutes.loginWithPhone) {
             LoginWithPhoneScreen(
                 columnState = it.columnState,
                 onDone = { navController.popBackStack() },
             )
         }
 
+        @Suppress("DEPRECATION")
         composable(AuthenticationNavRoutes.loginWithGoogle) {
             LoginWithGoogleScreen(
                 signInSuccessScreen = googleSignInSuccessScreen,

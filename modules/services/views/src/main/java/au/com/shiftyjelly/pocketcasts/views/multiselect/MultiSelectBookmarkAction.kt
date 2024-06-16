@@ -20,9 +20,9 @@ sealed class MultiSelectBookmarkAction(
     title,
     iconRes,
     analyticsValue,
-    isVisible
+    isVisible,
 ) {
-    object DeleteBookmark : MultiSelectBookmarkAction(
+    data object DeleteBookmark : MultiSelectBookmarkAction(
         R.id.menu_delete,
         R.id.menu_delete,
         LR.string.delete,
@@ -36,6 +36,14 @@ sealed class MultiSelectBookmarkAction(
         LR.string.edit,
         IR.drawable.ic_edit,
         "edit",
-        isVisible = isVisible
+        isVisible = isVisible,
+    )
+
+    data class ShareBookmark(override val isVisible: Boolean) : MultiSelectBookmarkAction(
+        R.id.menu_share,
+        R.id.menu_share,
+        LR.string.share,
+        IR.drawable.ic_share,
+        "share",
     )
 }

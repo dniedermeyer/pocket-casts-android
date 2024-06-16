@@ -1,4 +1,5 @@
 @file:OptIn(ExperimentalFoundationApi::class)
+@file:Suppress("DEPRECATION")
 
 package au.com.shiftyjelly.pocketcasts.wear.ui.component
 
@@ -11,14 +12,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
-import androidx.wear.compose.material.SwipeToDismissBoxState
-import androidx.wear.compose.material.edgeSwipeToDismiss
-import au.com.shiftyjelly.pocketcasts.wear.extensions.responsive
+import androidx.wear.compose.foundation.SwipeToDismissBoxState
+import androidx.wear.compose.foundation.edgeSwipeToDismiss
 import au.com.shiftyjelly.pocketcasts.wear.ui.UpNextScreen
 import au.com.shiftyjelly.pocketcasts.wear.ui.WatchListScreen
 import au.com.shiftyjelly.pocketcasts.wear.ui.episode.EpisodeScreenFlow
 import au.com.shiftyjelly.pocketcasts.wear.ui.player.NowPlayingScreen
-import com.google.android.horologist.compose.layout.ScalingLazyColumnDefaults
 import com.google.android.horologist.compose.layout.rememberColumnState
 import com.google.android.horologist.compose.navscaffold.NavScaffoldViewModel
 import com.google.android.horologist.compose.navscaffold.ScrollableScaffoldContext
@@ -28,6 +27,7 @@ import kotlinx.coroutines.launch
 object NowPlayingPager {
     const val pageCount = 3
 }
+
 /**
  * Pager with three pages:
  *
@@ -40,10 +40,9 @@ fun NowPlayingPager(
     navController: NavController,
     pagerState: PagerState = rememberPagerState { NowPlayingPager.pageCount },
     swipeToDismissState: SwipeToDismissBoxState,
-    scrollableScaffoldContext: ScrollableScaffoldContext? = null,
+    @Suppress("DEPRECATION") scrollableScaffoldContext: ScrollableScaffoldContext? = null,
     firstPageContent: @Composable () -> Unit,
 ) {
-
     val defaultTimeTextMode = remember { scrollableScaffoldContext?.timeTextMode }
 
     // Don't allow swipe to dismiss on first screen (because there is no where to swipe back to--instead
@@ -62,26 +61,24 @@ fun NowPlayingPager(
         scrollableScaffoldContext?.timeTextMode = if (pagerState.currentPage == 0) {
             defaultTimeTextMode
         } else {
+            @Suppress("DEPRECATION")
             NavScaffoldViewModel.TimeTextMode.Off
         }
     }
 
     PagerScreen(
         state = pagerState,
-        modifier = modifier
+        modifier = modifier,
     ) { page ->
         when (page) {
-
             0 -> firstPageContent()
 
             1 -> Column {
-
                 val coroutineScope = rememberCoroutineScope()
 
                 NowPlayingScreen(
                     navigateToEpisode = { episodeUuid ->
                         coroutineScope.launch {
-
                             val alreadyOnEpisodeScreen =
                                 navController.currentDestination?.route == EpisodeScreenFlow.episodeScreen
                             val alreadyOnCorrectEpisode by lazy {
@@ -110,9 +107,7 @@ fun NowPlayingPager(
                     navigateToEpisode = { episodeUuid ->
                         navController.navigate(EpisodeScreenFlow.navigateRoute(episodeUuid))
                     },
-                    columnState = rememberColumnState(
-                        ScalingLazyColumnDefaults.responsive(firstItemIsFullWidth = false)
-                    ),
+                    columnState = rememberColumnState(),
                 )
             }
         }

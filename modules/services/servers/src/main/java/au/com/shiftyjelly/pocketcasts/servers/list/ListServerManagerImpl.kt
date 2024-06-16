@@ -5,22 +5,21 @@ import au.com.shiftyjelly.pocketcasts.preferences.Settings
 import au.com.shiftyjelly.pocketcasts.servers.di.ListDownloadServerRetrofit
 import au.com.shiftyjelly.pocketcasts.servers.di.ListUploadServerRetrofit
 import au.com.shiftyjelly.pocketcasts.utils.extensions.sha1
-import retrofit2.Retrofit
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
+import retrofit2.Retrofit
 
 class ListServerManagerImpl @Inject constructor(
     @ListUploadServerRetrofit uploadRetrofit: Retrofit,
-    @ListDownloadServerRetrofit downloadRetrofit: Retrofit
+    @ListDownloadServerRetrofit downloadRetrofit: Retrofit,
 ) : ListServerManager {
 
     private val uploadServer: ListUploadServer = uploadRetrofit.create(ListUploadServer::class.java)
     private val downloadServer: ListDownloadServer = downloadRetrofit.create(ListDownloadServer::class.java)
 
     companion object {
-
         private val DATE_FORMAT = SimpleDateFormat("yyyyMMddHHmmss", Locale.US)
 
         fun buildSecurityHash(date: String, serverSecret: String): String? {
@@ -28,9 +27,14 @@ class ListServerManagerImpl @Inject constructor(
             return stringToHash.sha1()
         }
 
-        fun extractShareListIdFromWebUrl(id: String?): String? {
+        fun extractShareListIdFromWebUrl(webUrl: String): String {
             val host = Settings.SERVER_LIST_HOST
-            return id?.replace("https://$host/", "")?.replace("http://$host/", "")?.replace("/$host/", "")?.replace(".html", "")
+            return webUrl
+                .trimStart { it == '/' }
+                .replace("https://$host/", "")
+                .replace("http://$host/", "")
+                .replace("$host/", "")
+                .replace(".html", "")
         }
     }
 
@@ -42,7 +46,7 @@ class ListServerManagerImpl @Inject constructor(
             description = description,
             hash = hash ?: "",
             date = dateString,
-            podcasts = podcasts.map { podcast -> ListPodcast.fromPodcast(podcast) }
+            podcasts = podcasts.map { podcast -> ListPodcast.fromPodcast(podcast) },
         )
         val response = uploadServer.createPodcastList(request)
         return response.result?.shareUrl
@@ -52,7 +56,7 @@ class ListServerManagerImpl @Inject constructor(
         return downloadServer.getPodcastList(listId)
     }
 
-    override fun extractShareListIdFromWebUrl(webUrl: String?): String? {
+    override fun extractShareListIdFromWebUrl(webUrl: String): String {
         return Companion.extractShareListIdFromWebUrl(webUrl)
     }
 }

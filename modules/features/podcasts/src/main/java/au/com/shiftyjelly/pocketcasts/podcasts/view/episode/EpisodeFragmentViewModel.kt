@@ -35,13 +35,15 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.functions.Function4
 import io.reactivex.schedulers.Schedulers
+import java.util.Date
+import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.asFlowable
-import java.util.Date
-import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
 
 @HiltViewModel
 class EpisodeFragmentViewModel @Inject constructor(
@@ -54,7 +56,7 @@ class EpisodeFragmentViewModel @Inject constructor(
     val settings: Settings,
     private val showNotesManager: ShowNotesManager,
     private val analyticsTracker: AnalyticsTrackerWrapper,
-    private val episodeAnalytics: EpisodeAnalytics
+    private val episodeAnalytics: EpisodeAnalytics,
 ) : ViewModel(), CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Default
@@ -72,7 +74,12 @@ class EpisodeFragmentViewModel @Inject constructor(
     var episode: PodcastEpisode? = null
     var isFragmentChangingConfigurations: Boolean = false
 
-    fun setup(episodeUuid: String, podcastUuid: String?, forceDark: Boolean) {
+    fun setup(
+        episodeUuid: String,
+        podcastUuid: String?,
+        forceDark: Boolean,
+        timestamp: Duration?,
+    ) {
         val isDarkTheme = forceDark || theme.isDarkTheme
         val progressUpdatesObservable = downloadManager.progressUpdateRelay
             .filter { it.episodeUuid == episodeUuid }
@@ -117,10 +124,22 @@ class EpisodeFragmentViewModel @Inject constructor(
                     podcastManager.findPodcastByUuidRx(episode.podcastUuid).toFlowable(),
                     showNotesManager.loadShowNotesFlow(podcastUuid = episode.podcastUuid, episodeUuid = episode.uuid).asFlowable(),
                     progressUpdatesObservable,
-                    zipper
+                    zipper,
                 )
             }
-            .doOnNext { if (it is EpisodeFragmentState.Loaded) { episode = it.episode } }
+            .doOnNext {
+                if (it is EpisodeFragmentState.Loaded) {
+                    timestamp?.let { timestamp ->
+                        if (it.episode.playedUpTo.toInt() != timestamp.toInt(DurationUnit.SECONDS) &&
+                            episode is PodcastEpisode
+                        ) {
+                            it.episode.playedUpTo = timestamp.toDouble(DurationUnit.SECONDS)
+                            seekToTimeMs(timestamp.toInt(DurationUnit.MILLISECONDS))
+                        }
+                    }
+                    episode = it.episode
+                }
+            }
             .onErrorReturn { EpisodeFragmentState.Error(it) }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeOn(Schedulers.io())
@@ -255,8 +274,9 @@ class EpisodeFragmentViewModel @Inject constructor(
 
     fun playClickedGetShouldClose(
         warningsHelper: WarningsHelper,
+        showedStreamWarning: Boolean,
         force: Boolean = false,
-        fromListUuid: String? = null
+        fromListUuid: String? = null,
     ): Boolean {
         episode?.let { episode ->
             if (isPlaying.value == true) {
@@ -267,7 +287,12 @@ class EpisodeFragmentViewModel @Inject constructor(
                     FirebaseAnalyticsTracker.podcastEpisodePlayedFromList(it, episode.podcastUuid)
                     analyticsTracker.track(AnalyticsEvent.DISCOVER_LIST_EPISODE_PLAY, mapOf(LIST_ID_KEY to it, PODCAST_ID_KEY to episode.podcastUuid))
                 }
-                playbackManager.playNow(episode, forceStream = force, sourceView = source)
+                playbackManager.playNow(
+                    episode = episode,
+                    forceStream = force,
+                    showedStreamWarning = showedStreamWarning,
+                    sourceView = source,
+                )
                 warningsHelper.showBatteryWarningSnackbarIfAppropriate()
                 return true
             }
